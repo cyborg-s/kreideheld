@@ -1,0 +1,151 @@
+# =========================
+# General
+# =========================
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+
+# =========================
+# Environment variables
+# =========================
+
+.env
+.env.*
+!.env.example
+
+
+# =========================
+# Python Backend
+# =========================
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python build files
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Package manager
+pip-wheel-metadata/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+
+# Jupyter
+.ipynb_checkpoints/
+
+
+# =========================
+# Django (falls verwendet)
+# =========================
+
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+
+
+# =========================
+# FastAPI / Flask
+# =========================
+
+instance/
+
+
+# =========================
+# Node / Frontend
+# =========================
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+out/
+
+# Cache
+.npm/
+.cache/
+.parcel-cache/
+
+# Angular
+.angular/
+*.ngfactory.ts
+*.ngstyle.ts
+
+# React
+.eslintcache
+
+
+# =========================
+# Frontend Environment
+# =========================
+
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+
+# =========================
+# Coverage
+# =========================
+
+coverage/
+
+
+# =========================
+# Docker
+# =========================
+
+*.pid
+docker-compose.override.yml
+
+
+# =========================
+# Certificates / Secrets
+# =========================
+
+*.pem
+*.key
+*.crt
+secrets/
+
+
+# =========================
+# Temporary files
+# =========================
+
+tmp/
+temp/
+*.tmp
+*.bak

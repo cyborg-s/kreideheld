@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kreideheld – Mitarbeiter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Kalam:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F6F1E7;
+    --bg-alt: #EFE6D8;
+    --surface: #FFFDF9;
+    --ink: #3B2A1E;
+    --ink-soft: #6B5744;
+    --wood: #8B5E34;
+    --wood-dark: #5C3D22;
+    --honey: #C99552;
+    --honey-soft: #E9D3AC;
+    --moss: #6B8F5A;
+    --moss-soft: #DCE7D4;
+    --rust: #B5533C;
+    --rust-soft: #F1DAD3;
+    --border: #E0D3BE;
+    --shadow: 0 1px 2px rgba(59,42,30,0.06), 0 4px 14px rgba(59,42,30,0.07);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    background-image: radial-gradient(circle at 1px 1px, rgba(139,94,52,0.07) 1px, transparent 0);
+    background-size: 22px 22px;
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+
+  /* ---------- LOGIN ---------- */
+  #login-screen{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .login-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    width:100%;
+    max-width:360px;
+    padding:32px 28px;
+    text-align:center;
+  }
+  .login-mark{
+    width:52px;height:52px;
+    margin:0 auto 14px;
+    border-radius:8px;
+    background:var(--wood);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Kalam',cursive;
+    font-size:28px;
+    color:#F6F1E7;
+    border:2px solid var(--honey-soft);
+    transform:rotate(-3deg);
+  }
+  .login-card h1{
+    font-family:'Fraunces', serif;
+    font-size:22px;
+    margin:0 0 4px;
+  }
+  .login-card p.sub{
+    color:var(--ink-soft);
+    font-size:13px;
+    margin:0 0 26px;
+  }
+  .login-field{
+    text-align:left;
+    margin-bottom:14px;
+  }
+  .login-field label{
+    display:block;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+    font-weight:600;
+  }
+  .login-field select, .login-field input{
+    width:100%;
+    padding:11px 12px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:#fff;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    color:var(--ink);
+  }
+  .login-field select:focus, .login-field input:focus{
+    outline:2px solid var(--honey);
+    outline-offset:1px;
+    border-color:var(--honey);
+  }
+  .login-btn{
+    width:100%;
+    background:var(--wood);
+    color:#fff;
+    border:none;
+    padding:12px;
+    border-radius:8px;
+    font-weight:700;
+    font-size:14.5px;
+    cursor:pointer;
+    margin-top:6px;
+  }
+  .login-btn:hover{background:var(--wood-dark);}
+  .login-hint{
+    margin-top:16px;
+    font-size:11.5px;
+    color:var(--ink-soft);
+  }
+
+  /* ---------- APP ---------- */
+  #app-screen{display:none;}
+
+  header.top{
+    background:var(--wood-dark);
+    color:var(--bg);
+    padding:16px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    border-bottom:4px solid var(--honey);
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:36px;height:36px;
+    border-radius:6px;
+    background:var(--wood);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Kalam',cursive;
+    font-size:19px;
+    color:#F6F1E7;
+    border:2px solid var(--honey-soft);
+    transform:rotate(-3deg);
+  }
+  .brand-text h1{font-family:'Fraunces', serif; font-size:19px; margin:0;}
+  .brand-text span{font-size:12px; color:var(--honey-soft);}
+
+  .header-right{display:flex; align-items:center; gap:12px;}
+  .account-pill{
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.15);
+    padding:7px 14px;
+    border-radius:100px;
+    font-size:13px;
+    font-weight:600;
+    display:flex;align-items:center;gap:8px;
+  }
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--moss);}
+  .logout-link{
+    color:var(--honey-soft);
+    font-size:12.5px;
+    cursor:pointer;
+    text-decoration:underline;
+    background:none;border:none;
+    font-family:'Inter',sans-serif;
+  }
+
+  .tabs{
+    max-width:900px;
+    margin:22px auto 0;
+    padding:0 20px;
+    display:flex;
+    gap:6px;
+  }
+  .tab-btn{
+    background:transparent;
+    border:none;
+    padding:10px 18px;
+    font-size:14px;
+    font-weight:600;
+    color:var(--ink-soft);
+    cursor:pointer;
+    border-radius:8px 8px 0 0;
+    font-family:'Inter',sans-serif;
+  }
+  .tab-btn.active{
+    background:var(--surface);
+    color:var(--wood-dark);
+    border:1px solid var(--border);
+    border-bottom:1px solid var(--surface);
+    position:relative;
+    top:1px;
+  }
+
+  main{
+    max-width:900px;
+    margin:0 auto;
+    padding:20px;
+  }
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    box-shadow:var(--shadow);
+    padding:24px;
+  }
+  .panel h2{
+    font-family:'Fraunces', serif;
+    font-size:20px;
+    margin:0 0 4px;
+  }
+  .panel p.sub{
+    color:var(--ink-soft);
+    font-size:13px;
+    margin:0 0 20px;
+  }
+
+  .search-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(140px,1fr));
+    gap:14px;
+    margin-bottom:18px;
+  }
+  .field label{
+    display:block;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+    font-weight:600;
+  }
+  .field input, .field select{
+    width:100%;
+    padding:10px 11px;
+    border:1px solid var(--border);
+    border-radius:7px;
+    background:#fff;
+    font-family:'Inter',sans-serif;
+    font-size:13.5px;
+    color:var(--ink);
+  }
+  .field input:focus, .field select:focus{
+    outline:2px solid var(--honey);
+    outline-offset:1px;
+    border-color:var(--honey);
+  }
+  .btn-primary{
+    background:var(--wood);
+    color:#fff;
+    border:none;
+    padding:11px 20px;
+    border-radius:8px;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+  .btn-primary:hover{background:var(--wood-dark);}
+  .btn-secondary{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--ink-soft);
+    padding:10px 16px;
+    border-radius:8px;
+    font-weight:600;
+    font-size:13.5px;
+    cursor:pointer;
+  }
+  .btn-secondary:hover{border-color:var(--wood); color:var(--wood);}
+
+  #search-results{margin-top:20px;}
+  .result-card{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    padding:16px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    margin-bottom:10px;
+    background:#fff;
+  }
+  .chalk-id{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:58px;
+    padding:6px 12px;
+    background:var(--wood-dark);
+    color:#F6F1E7;
+    font-family:'Kalam',cursive;
+    font-size:20px;
+    border-radius:5px;
+    transform:rotate(-1.5deg);
+    flex-shrink:0;
+  }
+  .result-info{flex:1;}
+  .result-info strong{font-size:14.5px;}
+  .result-info .dims{color:var(--ink-soft); font-size:13px; margin-top:2px;}
+  .typ-tag{
+    display:inline-block;
+    margin-left:8px;
+    padding:3px 8px;
+    border:1px solid var(--border);
+    color:var(--ink-soft);
+    border-radius:100px;
+    font-size:11px;
+  }
+  .search-hint{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin:-8px 0 18px;
+  }
+  .match-note{
+    padding:14px 16px;
+    border-radius:10px;
+    background:var(--moss-soft);
+    color:#3D5233;
+    font-size:13.5px;
+    font-weight:600;
+    margin-bottom:14px;
+  }
+  .no-match-note{
+    padding:14px 16px;
+    border-radius:10px;
+    background:var(--rust-soft);
+    color:#7A3324;
+    font-size:13.5px;
+    font-weight:600;
+    margin-bottom:14px;
+  }
+
+  /* Manage tab */
+  .manage-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .manage-list{display:flex; flex-direction:column; gap:10px;}
+  .manage-item{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:14px 16px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:#fff;
+    flex-wrap:wrap;
+  }
+  .manage-item .grow{flex:1; min-width:180px;}
+  .manage-item .actions{display:flex; gap:8px;}
+  .icon-btn{
+    border:1px solid var(--border);
+    background:#fff;
+    width:34px;height:34px;
+    border-radius:7px;
+    cursor:pointer;
+    font-size:14px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .icon-btn.edit:hover{border-color:var(--honey); background:var(--honey-soft);}
+  .icon-btn.delete:hover{border-color:var(--rust); background:var(--rust-soft); color:var(--rust);}
+
+  /* Modal */
+  .modal-backdrop{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(59,42,30,0.35);
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:10;
+  }
+  .modal-backdrop.open{display:flex;}
+  .modal{
+    background:var(--surface);
+    border-radius:14px;
+    width:100%;
+    max-width:420px;
+    padding:26px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.2);
+  }
+  .modal h3{
+    font-family:'Fraunces', serif;
+    margin:0 0 16px;
+    font-size:19px;
+  }
+  .modal-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-bottom:18px;
+  }
+  .modal-actions{display:flex; justify-content:flex-end; gap:10px;}
+  .price-hint{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin:-8px 0 16px;
+  }
+
+  .confirm-backdrop{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(59,42,30,0.35);
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:10;
+  }
+  .confirm-backdrop.open{display:flex;}
+  .confirm-box{
+    background:var(--surface);
+    border-radius:14px;
+    width:100%;
+    max-width:340px;
+    padding:24px;
+    text-align:center;
+  }
+  .confirm-box p{font-size:14px; margin:0 0 18px;}
+  .confirm-actions{display:flex; gap:10px; justify-content:center;}
+  .btn-danger{
+    background:var(--rust);
+    color:#fff;
+    border:none;
+    padding:10px 18px;
+    border-radius:8px;
+    font-weight:700;
+    cursor:pointer;
+  }
+
+  @media (max-width:600px){
+    main{padding:14px;}
+    .panel{padding:18px;}
+    .modal-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-mark">K</div>
+    <h1>Kreideheld</h1>
+    <p class="sub">Mitarbeiter-Login · Restlager Schreinerei Mustermann</p>
+    <div class="login-field">
+      <label>Unteraccount</label>
+      <select id="login-ma">
+        <option value="MA1">MA1 – Peter</option>
+        <option value="MA2">MA2 – Julia</option>
+        <option value="MA3">MA3 – Tom</option>
+      </select>
+    </div>
+    <div class="login-field">
+      <label>Passwort</label>
+      <input type="password" placeholder="••••••••" value="••••••••">
+    </div>
+    <button class="login-btn" id="login-btn">Anmelden</button>
+    <p class="login-hint">Zugangsdaten werden vom Chef im Hauptaccount vergeben.</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <header class="top">
+    <div class="brand">
+      <div class="brand-mark">K</div>
+      <div class="brand-text">
+        <h1>Kreideheld</h1>
+        <span>Restlager · Schreinerei Mustermann</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="account-pill"><span class="dot"></span> Angemeldet als <span id="active-ma">MA1</span></div>
+      <button class="logout-link" id="logout-btn">Abmelden</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="search">Material suchen</button>
+    <button class="tab-btn" data-tab="manage">Restplatten verwalten</button>
+  </div>
+
+  <main>
+    <!-- SEARCH TAB -->
+    <section id="tab-search">
+      <div class="panel">
+        <h2>Material suchen</h2>
+        <p class="sub">Materialart und Mindestmaße eingeben – Kreideheld zeigt passende Restplatten.</p>
+        <div class="search-grid">
+          <div class="field">
+            <label>Materialart</label>
+            <select id="s-material"><option value="">Alle</option></select>
+          </div>
+          <div class="field">
+            <label>Mind. Dicke (mm)</label>
+            <input type="number" id="s-dicke" placeholder="0">
+          </div>
+          <div class="field">
+            <label>Mind. Länge (mm)</label>
+            <input type="number" id="s-laenge" placeholder="0">
+          </div>
+          <div class="field">
+            <label>Mind. Breite (mm)</label>
+            <input type="number" id="s-breite" placeholder="0">
+          </div>
+        </div>
+        <button class="btn-primary" id="search-btn">Suchen</button>
+        <p class="search-hint">Bei Plattenwerkstoffen (MDF, Multiplex, Spanplatte …) zählt auch die gedrehte Maßeingabe. Bei Massivholz nicht – wegen der Faserrichtung.</p>
+
+        <div id="search-results"></div>
+      </div>
+    </section>
+
+    <!-- MANAGE TAB -->
+    <section id="tab-manage" style="display:none;">
+      <div class="panel">
+        <div class="manage-header">
+          <div>
+            <h2 style="margin-bottom:2px;">Restplatten verwalten</h2>
+            <p class="sub" style="margin-bottom:0;">Neue Reste anlegen, vorhandene ändern oder entfernen.</p>
+          </div>
+          <button class="btn-primary" id="add-btn">＋ Neue Restplatte</button>
+        </div>
+        <div class="manage-list" id="manage-list"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- MODAL: Anlegen/Bearbeiten -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <h3 id="modal-title">Neue Restplatte</h3>
+    <input type="hidden" id="edit-index" value="">
+    <div class="modal-grid">
+      <div class="field">
+        <label>Kreide-ID</label>
+        <input type="text" id="m-id" maxlength="4" placeholder="z. B. 1042">
+      </div>
+      <div class="field">
+        <label>Materialart</label>
+        <input type="text" id="m-material" placeholder="z. B. Eiche">
+      </div>
+      <div class="field">
+        <label>Typ</label>
+        <select id="m-typ">
+          <option value="Massiv">Massivholz</option>
+          <option value="Platte">Plattenwerkstoff</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Dicke (mm)</label>
+        <input type="number" id="m-dicke">
+      </div>
+      <div class="field">
+        <label>Länge (mm)</label>
+        <input type="number" id="m-laenge">
+      </div>
+      <div class="field">
+        <label>Breite (mm)</label>
+        <input type="number" id="m-breite">
+      </div>
+    </div>
+    <p class="price-hint">Preis/qm wird vom Chef im Hauptaccount festgelegt.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="modal-cancel">Abbrechen</button>
+      <button class="btn-primary" id="modal-save">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE -->
+<div class="confirm-backdrop" id="confirm-backdrop">
+  <div class="confirm-box">
+    <p>Diese Restplatte wirklich entfernen (verbraucht / entsorgt)?</p>
+    <div class="confirm-actions">
+      <button class="btn-secondary" id="confirm-cancel">Abbrechen</button>
+      <button class="btn-danger" id="confirm-delete">Entfernen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let data = [
+    {id:"1042", material:"Eiche", typ:"Massiv", dicke:19, laenge:1200, breite:480, preis:38.50, ma:"MA1"},
+    {id:"2087", material:"Buche", typ:"Massiv", dicke:16, laenge:900, breite:320, preis:29.00, ma:"MA2"},
+    {id:"3311", material:"Fichte", typ:"Massiv", dicke:22, laenge:1800, breite:600, preis:14.20, ma:"MA1"},
+    {id:"0456", material:"Nussbaum", typ:"Massiv", dicke:25, laenge:750, breite:280, preis:64.00, ma:"MA3"},
+    {id:"1199", material:"Ahorn", typ:"Massiv", dicke:19, laenge:1100, breite:400, preis:41.30, ma:"MA2"},
+    {id:"2755", material:"Kiefer", typ:"Massiv", dicke:18, laenge:1600, breite:520, preis:12.90, ma:"MA1"},
+    {id:"0821", material:"Birke", typ:"Massiv", dicke:15, laenge:850, breite:350, preis:27.60, ma:"MA3"},
+    {id:"3390", material:"Esche", typ:"Massiv", dicke:20, laenge:1300, breite:460, preis:36.80, ma:"MA2"},
+    {id:"1567", material:"MDF", typ:"Platte", dicke:19, laenge:2000, breite:700, preis:8.40, ma:"MA1"},
+    {id:"2210", material:"Multiplex", typ:"Platte", dicke:12, laenge:1400, breite:600, preis:19.90, ma:"MA3"},
+    {id:"4478", material:"Spanplatte", typ:"Platte", dicke:16, laenge:1300, breite:500, preis:6.90, ma:"MA2"},
+  ];
+
+  let activeMA = "MA1";
+  let deleteIndex = null;
+
+  // --- LOGIN ---
+  document.getElementById('login-btn').addEventListener('click', ()=>{
+    activeMA = document.getElementById('login-ma').value;
+    document.getElementById('active-ma').textContent = activeMA;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    populateMaterialSelect();
+    renderManageList();
+  });
+  document.getElementById('logout-btn').addEventListener('click', ()=>{
+    document.getElementById('app-screen').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+  });
+
+  // --- TABS ---
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      document.getElementById('tab-search').style.display = tab === 'search' ? 'block' : 'none';
+      document.getElementById('tab-manage').style.display = tab === 'manage' ? 'block' : 'none';
+      if(tab === 'manage') renderManageList();
+    });
+  });
+
+  function populateMaterialSelect(){
+    const sel = document.getElementById('s-material');
+    sel.innerHTML = '<option value="">Alle</option>';
+    [...new Set(data.map(d=>d.material))].sort().forEach(m=>{
+      const opt = document.createElement('option');
+      opt.value = m; opt.textContent = m;
+      sel.appendChild(opt);
+    });
+  }
+
+  // --- SEARCH ---
+  function fitsSize(r, minLaenge, minBreite){
+    // Massivholz: Faserrichtung fest, keine Drehung erlaubt
+    if(r.typ === 'Massiv'){
+      return r.laenge >= minLaenge && r.breite >= minBreite;
+    }
+    // Plattenwerkstoffe (MDF, Multiplex, Spanplatte ...): Ausrichtung egal
+    const passtNormal = r.laenge >= minLaenge && r.breite >= minBreite;
+    const passtGedreht = r.laenge >= minBreite && r.breite >= minLaenge;
+    return passtNormal || passtGedreht;
+  }
+
+  document.getElementById('search-btn').addEventListener('click', ()=>{
+    const material = document.getElementById('s-material').value;
+    const dicke = parseFloat(document.getElementById('s-dicke').value) || 0;
+    const laenge = parseFloat(document.getElementById('s-laenge').value) || 0;
+    const breite = parseFloat(document.getElementById('s-breite').value) || 0;
+
+    const matches = data.filter(r=>{
+      if(material && r.material !== material) return false;
+      if(r.dicke < dicke) return false;
+      if(!fitsSize(r, laenge, breite)) return false;
+      return true;
+    });
+
+    const container = document.getElementById('search-results');
+    container.innerHTML = '';
+
+    if(matches.length === 0){
+      container.innerHTML = '<div class="no-match-note">Keine passende Restplatte gefunden. Maße oder Materialart anpassen.</div>';
+      return;
+    }
+
+    const note = document.createElement('div');
+    note.className = 'match-note';
+    note.textContent = matches.length === 1
+      ? `Platte #${matches[0].id} hat passende Maße – anhand der Kreidenummer auf der Platte suchen.`
+      : `${matches.length} Restplatten mit passenden Maßen gefunden – anhand der Kreidenummer auf der Platte suchen.`;
+    container.appendChild(note);
+
+    matches.forEach(r=>{
+      const card = document.createElement('div');
+      card.className = 'result-card';
+      card.innerHTML = `
+        <span class="chalk-id">#${r.id}</span>
+        <div class="result-info">
+          <strong>${r.material}</strong><span class="typ-tag">${r.typ === 'Massiv' ? 'Massivholz' : 'Platte'}</span>
+          <div class="dims">${r.dicke} mm dick · ${r.laenge} × ${r.breite} mm</div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  });
+
+  // --- MANAGE ---
+  function renderManageList(){
+    const list = document.getElementById('manage-list');
+    list.innerHTML = '';
+    data.forEach((r, i)=>{
+      const item = document.createElement('div');
+      item.className = 'manage-item';
+      item.innerHTML = `
+        <span class="chalk-id">#${r.id}</span>
+        <div class="grow">
+          <strong>${r.material}</strong><span class="typ-tag">${r.typ === 'Massiv' ? 'Massivholz' : 'Platte'}</span>
+          <div class="dims" style="color:var(--ink-soft); font-size:13px;">${r.dicke} mm · ${r.laenge} × ${r.breite} mm</div>
+        </div>
+        <div class="actions">
+          <button class="icon-btn edit" title="Bearbeiten" data-i="${i}">✎</button>
+          <button class="icon-btn delete" title="Entfernen" data-i="${i}">✕</button>
+        </div>
+      `;
+      list.appendChild(item);
+    });
+
+    list.querySelectorAll('.icon-btn.edit').forEach(btn=>{
+      btn.addEventListener('click', ()=> openModal(parseInt(btn.dataset.i)));
+    });
+    list.querySelectorAll('.icon-btn.delete').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        deleteIndex = parseInt(btn.dataset.i);
+        document.getElementById('confirm-backdrop').classList.add('open');
+      });
+    });
+  }
+
+  // --- MODAL: Add / Edit ---
+  const modalBackdrop = document.getElementById('modal-backdrop');
+  document.getElementById('add-btn').addEventListener('click', ()=> openModal(null));
+  document.getElementById('modal-cancel').addEventListener('click', ()=> modalBackdrop.classList.remove('open'));
+
+  function openModal(index){
+    document.getElementById('edit-index').value = index === null ? '' : index;
+    document.getElementById('modal-title').textContent = index === null ? 'Neue Restplatte' : 'Restplatte bearbeiten';
+    if(index === null){
+      document.getElementById('m-id').value = '';
+      document.getElementById('m-material').value = '';
+      document.getElementById('m-typ').value = 'Massiv';
+      document.getElementById('m-dicke').value = '';
+      document.getElementById('m-laenge').value = '';
+      document.getElementById('m-breite').value = '';
+    } else {
+      const r = data[index];
+      document.getElementById('m-id').value = r.id;
+      document.getElementById('m-material').value = r.material;
+      document.getElementById('m-typ').value = r.typ;
+      document.getElementById('m-dicke').value = r.dicke;
+      document.getElementById('m-laenge').value = r.laenge;
+      document.getElementById('m-breite').value = r.breite;
+    }
+    modalBackdrop.classList.add('open');
+  }
+
+  document.getElementById('modal-save').addEventListener('click', ()=>{
+    const idxVal = document.getElementById('edit-index').value;
+    const bestehenderPreis = idxVal === '' ? 0 : data[parseInt(idxVal)].preis;
+    const entry = {
+      id: (document.getElementById('m-id').value || '0000').padStart(4,'0').slice(0,4),
+      material: document.getElementById('m-material').value || 'Unbekannt',
+      typ: document.getElementById('m-typ').value,
+      dicke: parseFloat(document.getElementById('m-dicke').value) || 0,
+      laenge: parseFloat(document.getElementById('m-laenge').value) || 0,
+      breite: parseFloat(document.getElementById('m-breite').value) || 0,
+      preis: bestehenderPreis,
+      ma: activeMA
+    };
+    if(idxVal === ''){
+      data.push(entry);
+    } else {
+      data[parseInt(idxVal)] = entry;
+    }
+    modalBackdrop.classList.remove('open');
+    populateMaterialSelect();
+    renderManageList();
+  });
+
+  // --- CONFIRM DELETE ---
+  const confirmBackdrop = document.getElementById('confirm-backdrop');
+  document.getElementById('confirm-cancel').addEventListener('click', ()=>{
+    confirmBackdrop.classList.remove('open');
+    deleteIndex = null;
+  });
+  document.getElementById('confirm-delete').addEventListener('click', ()=>{
+    if(deleteIndex !== null){
+      data.splice(deleteIndex, 1);
+      deleteIndex = null;
+    }
+    confirmBackdrop.classList.remove('open');
+    populateMaterialSelect();
+    renderManageList();
+  });
+</script>
+</body>
+</html>

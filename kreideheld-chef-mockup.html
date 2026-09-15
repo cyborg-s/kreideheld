@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kreideheld – Restlager Übersicht</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Kalam:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F6F1E7;
+    --bg-alt: #EFE6D8;
+    --surface: #FFFDF9;
+    --ink: #3B2A1E;
+    --ink-soft: #6B5744;
+    --wood: #8B5E34;
+    --wood-dark: #5C3D22;
+    --honey: #C99552;
+    --honey-soft: #E9D3AC;
+    --moss: #6B8F5A;
+    --rust: #B5533C;
+    --border: #E0D3BE;
+    --shadow: 0 1px 2px rgba(59,42,30,0.06), 0 4px 14px rgba(59,42,30,0.07);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(139,94,52,0.07) 1px, transparent 0);
+    background-size: 22px 22px;
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  header.top{
+    background:var(--wood-dark);
+    color:var(--bg);
+    padding:18px 28px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    border-bottom:4px solid var(--honey);
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .brand-mark{
+    width:40px;height:40px;
+    border-radius:6px;
+    background:var(--wood);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Kalam',cursive;
+    font-size:22px;
+    color:#F6F1E7;
+    border:2px solid var(--honey-soft);
+    transform:rotate(-3deg);
+  }
+  .brand-text h1{
+    font-family:'Fraunces', serif;
+    font-size:22px;
+    margin:0;
+    letter-spacing:0.2px;
+  }
+  .brand-text span{
+    font-size:12.5px;
+    color:var(--honey-soft);
+  }
+  .account-pill{
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.15);
+    padding:7px 14px;
+    border-radius:100px;
+    font-size:13px;
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--moss);}
+
+  main{
+    max-width:1180px;
+    margin:0 auto;
+    padding:26px 24px 60px;
+  }
+
+  .page-title{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:18px;
+  }
+  .page-title h2{
+    font-family:'Fraunces', serif;
+    font-size:26px;
+    font-weight:600;
+    margin:0;
+  }
+  .page-title p{
+    margin:2px 0 0;
+    color:var(--ink-soft);
+    font-size:13.5px;
+  }
+  .btn-primary{
+    background:var(--wood);
+    color:#fff;
+    border:none;
+    padding:11px 18px;
+    border-radius:8px;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+    transition:background .15s ease;
+  }
+  .btn-primary:hover{background:var(--wood-dark);}
+
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    box-shadow:var(--shadow);
+  }
+
+  .filters{
+    padding:18px 20px;
+    margin-bottom:20px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(150px,1fr));
+    gap:14px;
+    align-items:end;
+  }
+  .field label{
+    display:block;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+    font-weight:600;
+  }
+  .field input, .field select{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid var(--border);
+    border-radius:7px;
+    background:#fff;
+    font-family:'Inter',sans-serif;
+    font-size:13.5px;
+    color:var(--ink);
+  }
+  .field input:focus, .field select:focus{
+    outline:2px solid var(--honey);
+    outline-offset:1px;
+    border-color:var(--honey);
+  }
+  .filters .reset{
+    background:transparent;
+    border:1px solid var(--border);
+    border-radius:7px;
+    padding:9px 12px;
+    font-size:13px;
+    color:var(--ink-soft);
+    cursor:pointer;
+    font-weight:600;
+    height:38px;
+  }
+  .filters .reset:hover{border-color:var(--wood); color:var(--wood);}
+
+  .meta-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+  }
+  thead th{
+    text-align:left;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--ink-soft);
+    padding:12px 16px;
+    background:var(--bg-alt);
+    border-bottom:1px solid var(--border);
+    font-weight:700;
+  }
+  thead th:first-child{border-top-left-radius:12px;}
+  thead th:last-child{border-top-right-radius:12px;}
+  tbody td{
+    padding:13px 16px;
+    border-bottom:1px solid var(--border);
+    font-size:14px;
+    vertical-align:middle;
+  }
+  tbody tr:hover{background:#FBF5EA;}
+  tbody tr:last-child td{border-bottom:none;}
+
+  .chalk-id{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:58px;
+    padding:4px 10px;
+    background:var(--wood-dark);
+    color:#F6F1E7;
+    font-family:'Kalam',cursive;
+    font-size:19px;
+    border-radius:5px;
+    letter-spacing:.5px;
+    transform:rotate(-1.5deg);
+    box-shadow:inset 0 0 0 1.5px rgba(246,241,231,0.15);
+  }
+  .material-tag{
+    display:inline-block;
+    padding:4px 10px;
+    background:var(--honey-soft);
+    color:var(--wood-dark);
+    border-radius:100px;
+    font-size:12.5px;
+    font-weight:600;
+  }
+  .typ-tag{
+    display:inline-block;
+    margin-left:6px;
+    padding:3px 8px;
+    border:1px solid var(--border);
+    color:var(--ink-soft);
+    border-radius:100px;
+    font-size:11px;
+  }
+  .dims{color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+  .price{font-weight:700; font-variant-numeric:tabular-nums;}
+  .ma-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  .ma-avatar{
+    width:22px;height:22px;
+    border-radius:50%;
+    background:var(--moss);
+    color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;
+    font-weight:700;
+  }
+
+  .row-actions{display:flex; gap:8px;}
+  .icon-btn{
+    border:1px solid var(--border);
+    background:#fff;
+    width:32px;height:32px;
+    border-radius:7px;
+    cursor:pointer;
+    font-size:13px;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .icon-btn.edit:hover{border-color:var(--honey); background:var(--honey-soft);}
+  .icon-btn.delete:hover{border-color:var(--rust); background:var(--rust-soft); color:var(--rust);}
+
+  /* Modal */
+  .modal-backdrop{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(59,42,30,0.35);
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:10;
+  }
+  .modal-backdrop.open{display:flex;}
+  .modal{
+    background:var(--surface);
+    border-radius:14px;
+    width:100%;
+    max-width:420px;
+    padding:26px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.2);
+  }
+  .modal h3{
+    font-family:'Fraunces', serif;
+    margin:0 0 16px;
+    font-size:19px;
+  }
+  .modal-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-bottom:18px;
+  }
+  .modal-actions{display:flex; justify-content:flex-end; gap:10px;}
+
+  .confirm-backdrop{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(59,42,30,0.35);
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:10;
+  }
+  .confirm-backdrop.open{display:flex;}
+  .confirm-box{
+    background:var(--surface);
+    border-radius:14px;
+    width:100%;
+    max-width:340px;
+    padding:24px;
+    text-align:center;
+  }
+  .confirm-box p{font-size:14px; margin:0 0 18px;}
+  .confirm-actions{display:flex; gap:10px; justify-content:center;}
+  .btn-secondary{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--ink-soft);
+    padding:10px 16px;
+    border-radius:8px;
+    font-weight:600;
+    font-size:13.5px;
+    cursor:pointer;
+  }
+  .btn-secondary:hover{border-color:var(--wood); color:var(--wood);}
+  .btn-danger{
+    background:var(--rust);
+    color:#fff;
+    border:none;
+    padding:10px 18px;
+    border-radius:8px;
+    font-weight:700;
+    cursor:pointer;
+  }
+
+  @media (max-width:600px){
+    .modal-grid{grid-template-columns:1fr;}
+  }
+
+  .empty{
+    padding:50px 20px;
+    text-align:center;
+    color:var(--ink-soft);
+  }
+  .empty .chalk-id{margin-bottom:12px;}
+
+  /* Mobile: table -> cards */
+  @media (max-width: 760px){
+    main{padding:18px 14px 50px;}
+    table, thead, tbody, th, td, tr{display:block;}
+    thead{display:none;}
+    tbody tr{
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:12px;
+      margin-bottom:12px;
+      padding:14px 16px;
+      box-shadow:var(--shadow);
+    }
+    tbody td{
+      border:none;
+      padding:5px 0;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:13.5px;
+    }
+    tbody td::before{
+      content: attr(data-label);
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      color:var(--ink-soft);
+      font-weight:700;
+    }
+    tbody td.id-cell{justify-content:flex-start; gap:10px; padding-bottom:10px; margin-bottom:6px; border-bottom:1px dashed var(--border);}
+    tbody td.id-cell::before{content:none;}
+  }
+
+  footer.note{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 24px 40px;
+    color:var(--ink-soft);
+    font-size:12px;
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="brand-mark">K</div>
+    <div class="brand-text">
+      <h1>Kreideheld</h1>
+      <span>Restlager · Schreinerei Mustermann</span>
+    </div>
+  </div>
+  <div class="account-pill"><span class="dot"></span> Hauptaccount · Chef</div>
+</header>
+
+<main>
+  <div class="page-title">
+    <div>
+      <h2>Restplatten-Übersicht</h2>
+      <p>Alle erfassten Holzreste – filterbar nach Materialart, Maßen und Preis. Bei Plattenwerkstoffen zählt auch die gedrehte Maßeingabe (200×700 = 700×200), bei Massivholz nicht, wegen der Faserrichtung.</p>
+    </div>
+    <button class="btn-primary" id="add-btn">＋ Neue Restplatte</button>
+  </div>
+
+  <div class="panel filters" id="filters">
+    <div class="field">
+      <label>Kreide-ID</label>
+      <input type="text" id="f-id" placeholder="z. B. 1042" maxlength="4">
+    </div>
+    <div class="field">
+      <label>Materialart</label>
+      <select id="f-material">
+        <option value="">Alle</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Min. Dicke (mm)</label>
+      <input type="number" id="f-dicke" placeholder="0">
+    </div>
+    <div class="field">
+      <label>Min. Länge (mm)</label>
+      <input type="number" id="f-laenge" placeholder="0">
+    </div>
+    <div class="field">
+      <label>Min. Breite (mm)</label>
+      <input type="number" id="f-breite" placeholder="0">
+    </div>
+    <div class="field">
+      <label>Sortieren nach Preis</label>
+      <select id="f-sort">
+        <option value="">Keine</option>
+        <option value="asc">Preis/qm aufsteigend</option>
+        <option value="desc">Preis/qm absteigend</option>
+      </select>
+    </div>
+    <button class="reset" id="reset-btn">Filter zurücksetzen</button>
+  </div>
+
+  <div class="meta-row">
+    <span id="result-count">– Restplatten</span>
+    <span>Zuletzt aktualisiert: heute, 09:42 Uhr</span>
+  </div>
+
+  <div class="panel">
+    <table>
+      <thead>
+        <tr>
+          <th>Kreide-ID</th>
+          <th>Materialart</th>
+          <th>Dicke</th>
+          <th>Länge</th>
+          <th>Breite</th>
+          <th>Preis/qm</th>
+          <th>Zuletzt bearbeitet</th>
+          <th>Aktionen</th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+    <div class="empty" id="empty-state" style="display:none;">
+      <div class="chalk-id" style="display:inline-flex;">?</div>
+      <p>Keine Restplatte passt zu diesen Filtern.</p>
+    </div>
+  </div>
+</main>
+
+<footer class="note">Mockup-Ansicht · Daten werden im Backend in einer Datenbank gespeichert und hier nur als Präsentation dargestellt.</footer>
+
+<!-- MODAL: Anlegen/Bearbeiten -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <h3 id="modal-title">Neue Restplatte</h3>
+    <input type="hidden" id="edit-index" value="">
+    <div class="modal-grid">
+      <div class="field">
+        <label>Kreide-ID</label>
+        <input type="text" id="m-id" maxlength="4" placeholder="z. B. 1042">
+      </div>
+      <div class="field">
+        <label>Materialart</label>
+        <input type="text" id="m-material" placeholder="z. B. Eiche">
+      </div>
+      <div class="field">
+        <label>Typ</label>
+        <select id="m-typ">
+          <option value="Massiv">Massivholz</option>
+          <option value="Platte">Plattenwerkstoff</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Dicke (mm)</label>
+        <input type="number" id="m-dicke">
+      </div>
+      <div class="field">
+        <label>Länge (mm)</label>
+        <input type="number" id="m-laenge">
+      </div>
+      <div class="field">
+        <label>Breite (mm)</label>
+        <input type="number" id="m-breite">
+      </div>
+      <div class="field">
+        <label>Preis/qm (€)</label>
+        <input type="number" step="0.01" id="m-preis">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="modal-cancel">Abbrechen</button>
+      <button class="btn-primary" id="modal-save">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE -->
+<div class="confirm-backdrop" id="confirm-backdrop">
+  <div class="confirm-box">
+    <p>Diese Restplatte wirklich entfernen (verbraucht / entsorgt)?</p>
+    <div class="confirm-actions">
+      <button class="btn-secondary" id="confirm-cancel">Abbrechen</button>
+      <button class="btn-danger" id="confirm-delete">Entfernen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const data = [
+    {id:"1042", material:"Eiche", typ:"Massiv", dicke:19, laenge:1200, breite:480, preis:38.50, ma:"MA1"},
+    {id:"2087", material:"Buche", typ:"Massiv", dicke:16, laenge:900, breite:320, preis:29.00, ma:"MA2"},
+    {id:"3311", material:"Fichte", typ:"Massiv", dicke:22, laenge:1800, breite:600, preis:14.20, ma:"MA1"},
+    {id:"0456", material:"Nussbaum", typ:"Massiv", dicke:25, laenge:750, breite:280, preis:64.00, ma:"MA3"},
+    {id:"1199", material:"Ahorn", typ:"Massiv", dicke:19, laenge:1100, breite:400, preis:41.30, ma:"MA2"},
+    {id:"2755", material:"Kiefer", typ:"Massiv", dicke:18, laenge:1600, breite:520, preis:12.90, ma:"MA1"},
+    {id:"0821", material:"Birke", typ:"Massiv", dicke:15, laenge:850, breite:350, preis:27.60, ma:"MA3"},
+    {id:"3390", material:"Esche", typ:"Massiv", dicke:20, laenge:1300, breite:460, preis:36.80, ma:"MA2"},
+    {id:"1567", material:"MDF", typ:"Platte", dicke:19, laenge:2000, breite:700, preis:8.40, ma:"MA1"},
+    {id:"2210", material:"Multiplex", typ:"Platte", dicke:12, laenge:1400, breite:600, preis:19.90, ma:"MA3"},
+    {id:"0934", material:"Eiche", typ:"Massiv", dicke:30, laenge:600, breite:220, preis:44.00, ma:"MA1"},
+    {id:"3122", material:"Buche", typ:"Massiv", dicke:19, laenge:1050, breite:390, preis:31.20, ma:"MA2"},
+    {id:"4478", material:"Spanplatte", typ:"Platte", dicke:16, laenge:1300, breite:500, preis:6.90, ma:"MA2"},
+  ];
+
+  const materials = [...new Set(data.map(d=>d.material))].sort();
+  const matSelect = document.getElementById('f-material');
+  materials.forEach(m=>{
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = m;
+    matSelect.appendChild(opt);
+  });
+
+  const tbody = document.getElementById('table-body');
+  const emptyState = document.getElementById('empty-state');
+  const resultCount = document.getElementById('result-count');
+
+  function initials(ma){ return ma; }
+
+  function render(rows){
+    tbody.innerHTML = '';
+    if(rows.length === 0){
+      emptyState.style.display = 'block';
+      document.querySelector('table').style.display = 'none';
+    } else {
+      emptyState.style.display = 'none';
+      document.querySelector('table').style.display = '';
+      rows.forEach(r=>{
+        const realIndex = data.indexOf(r);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="id-cell" data-label="Kreide-ID"><span class="chalk-id">#${r.id}</span></td>
+          <td data-label="Materialart"><span class="material-tag">${r.material}</span><span class="typ-tag">${r.typ === 'Massiv' ? 'Massivholz' : 'Platte'}</span></td>
+          <td data-label="Dicke" class="dims">${r.dicke} mm</td>
+          <td data-label="Länge" class="dims">${r.laenge} mm</td>
+          <td data-label="Breite" class="dims">${r.breite} mm</td>
+          <td data-label="Preis/qm" class="price">${r.preis.toFixed(2)} €</td>
+          <td data-label="Zuletzt bearbeitet"><span class="ma-badge"><span class="ma-avatar">${r.ma.slice(2)}</span>${r.ma}</span></td>
+          <td data-label="Aktionen">
+            <div class="row-actions">
+              <button class="icon-btn edit" title="Bearbeiten" data-i="${realIndex}">✎</button>
+              <button class="icon-btn delete" title="Entfernen" data-i="${realIndex}">✕</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+    resultCount.textContent = rows.length + (rows.length === 1 ? ' Restplatte' : ' Restplatten');
+
+    tbody.querySelectorAll('.icon-btn.edit').forEach(btn=>{
+      btn.addEventListener('click', ()=> openModal(parseInt(btn.dataset.i)));
+    });
+    tbody.querySelectorAll('.icon-btn.delete').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        deleteIndex = parseInt(btn.dataset.i);
+        document.getElementById('confirm-backdrop').classList.add('open');
+      });
+    });
+  }
+
+  function fitsSize(r, minLaenge, minBreite){
+    // Massivholz: Faserrichtung fest, keine Drehung erlaubt
+    if(r.typ === 'Massiv'){
+      return r.laenge >= minLaenge && r.breite >= minBreite;
+    }
+    // Plattenwerkstoffe (MDF, Multiplex, Spanplatte ...): Ausrichtung egal
+    const passtNormal = r.laenge >= minLaenge && r.breite >= minBreite;
+    const passtGedreht = r.laenge >= minBreite && r.breite >= minLaenge;
+    return passtNormal || passtGedreht;
+  }
+
+  function applyFilters(){
+    const id = document.getElementById('f-id').value.trim();
+    const material = document.getElementById('f-material').value;
+    const dicke = parseFloat(document.getElementById('f-dicke').value) || 0;
+    const laenge = parseFloat(document.getElementById('f-laenge').value) || 0;
+    const breite = parseFloat(document.getElementById('f-breite').value) || 0;
+    const sort = document.getElementById('f-sort').value;
+
+    let rows = data.filter(r=>{
+      if(id && !r.id.includes(id)) return false;
+      if(material && r.material !== material) return false;
+      if(r.dicke < dicke) return false;
+      if(!fitsSize(r, laenge, breite)) return false;
+      return true;
+    });
+
+    if(sort === 'asc') rows = rows.sort((a,b)=>a.preis-b.preis);
+    if(sort === 'desc') rows = rows.sort((a,b)=>b.preis-a.preis);
+
+    render(rows);
+  }
+
+  ['f-id','f-material','f-dicke','f-laenge','f-breite','f-sort'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', applyFilters);
+    document.getElementById(id).addEventListener('change', applyFilters);
+  });
+
+  document.getElementById('reset-btn').addEventListener('click', ()=>{
+    document.getElementById('f-id').value = '';
+    document.getElementById('f-material').value = '';
+    document.getElementById('f-dicke').value = '';
+    document.getElementById('f-laenge').value = '';
+    document.getElementById('f-breite').value = '';
+    document.getElementById('f-sort').value = '';
+    applyFilters();
+  });
+
+  // --- CHEF: Bearbeiten / Anlegen ---
+  let deleteIndex = null;
+  const modalBackdrop = document.getElementById('modal-backdrop');
+
+  document.getElementById('add-btn').addEventListener('click', ()=> openModal(null));
+  document.getElementById('modal-cancel').addEventListener('click', ()=> modalBackdrop.classList.remove('open'));
+
+  function openModal(index){
+    document.getElementById('edit-index').value = index === null ? '' : index;
+    document.getElementById('modal-title').textContent = index === null ? 'Neue Restplatte' : 'Restplatte bearbeiten';
+    if(index === null){
+      document.getElementById('m-id').value = '';
+      document.getElementById('m-material').value = '';
+      document.getElementById('m-typ').value = 'Massiv';
+      document.getElementById('m-dicke').value = '';
+      document.getElementById('m-laenge').value = '';
+      document.getElementById('m-breite').value = '';
+      document.getElementById('m-preis').value = '';
+    } else {
+      const r = data[index];
+      document.getElementById('m-id').value = r.id;
+      document.getElementById('m-material').value = r.material;
+      document.getElementById('m-typ').value = r.typ;
+      document.getElementById('m-dicke').value = r.dicke;
+      document.getElementById('m-laenge').value = r.laenge;
+      document.getElementById('m-breite').value = r.breite;
+      document.getElementById('m-preis').value = r.preis;
+    }
+    modalBackdrop.classList.add('open');
+  }
+
+  document.getElementById('modal-save').addEventListener('click', ()=>{
+    const idxVal = document.getElementById('edit-index').value;
+    const entry = {
+      id: (document.getElementById('m-id').value || '0000').padStart(4,'0').slice(0,4),
+      material: document.getElementById('m-material').value || 'Unbekannt',
+      typ: document.getElementById('m-typ').value,
+      dicke: parseFloat(document.getElementById('m-dicke').value) || 0,
+      laenge: parseFloat(document.getElementById('m-laenge').value) || 0,
+      breite: parseFloat(document.getElementById('m-breite').value) || 0,
+      preis: parseFloat(document.getElementById('m-preis').value) || 0,
+      ma: idxVal === '' ? 'Chef' : data[parseInt(idxVal)].ma
+    };
+    if(idxVal === ''){
+      data.push(entry);
+    } else {
+      data[parseInt(idxVal)] = entry;
+    }
+    modalBackdrop.classList.remove('open');
+    // Materialliste im Filter aktuell halten
+    const currentMaterials = [...new Set(data.map(d=>d.material))].sort();
+    const sel = document.getElementById('f-material');
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">Alle</option>';
+    currentMaterials.forEach(m=>{
+      const opt = document.createElement('option');
+      opt.value = m; opt.textContent = m;
+      sel.appendChild(opt);
+    });
+    sel.value = currentVal;
+    applyFilters();
+  });
+
+  // --- CHEF: Löschen bestätigen ---
+  const confirmBackdrop = document.getElementById('confirm-backdrop');
+  document.getElementById('confirm-cancel').addEventListener('click', ()=>{
+    confirmBackdrop.classList.remove('open');
+    deleteIndex = null;
+  });
+  document.getElementById('confirm-delete').addEventListener('click', ()=>{
+    if(deleteIndex !== null){
+      data.splice(deleteIndex, 1);
+      deleteIndex = null;
+    }
+    confirmBackdrop.classList.remove('open');
+    applyFilters();
+  });
+
+  render(data);
+</script>
+</body>
+</html>

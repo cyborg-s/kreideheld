@@ -1,13 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
-type RestItemForm = {
-  employeeCode: string
-  material: string
-  length: string
-  width: string
-  height: string
-  notes: string
-}
+import type { RestItem, RestItemForm, UsedNumbersByEmployee } from './types'
+import {
+  findNextNumber,
+  loadRestItems,
+  loadUsedNumbers,
+  saveRestItems,
+  saveUsedNumbers,
+} from './storage/localStorage'
 
 export default function App() {
   const [form, setForm] = useState<RestItemForm>({
@@ -18,27 +18,25 @@ export default function App() {
     height: '',
     notes: '',
   })
+  const [usedNumbers, setUsedNumbers] = useState<UsedNumbersByEmployee>(loadUsedNumbers)
+  const [restItems, setRestItems] = useState<RestItem[]>(loadRestItems)
+  const [lastSavedId, setLastSavedId] = useState<number | null>(null)
+  const [formError, setFormError] = useState('')
 
-  const employeeRange = {
-    MA1: { min: 1000, max: 1999 },
-    MA2: { min: 2000, max: 2999 },
-    MA3: { min: 3000, max: 3999 },
-  }
+  useEffect(() => {
+    saveUsedNumbers(usedNumbers)
+  }, [usedNumbers])
 
-  const usedNumbersByEmployee: Record<string, number[]> = {
-    MA1: [1000, 1001, 1002, 1005],
-    MA2: [2000, 2001, 2003],
-    MA3: [3000, 3001, 3002],
-  }
+  useEffect(() => {
+    saveRestItems(restItems)
+  }, [restItems])
 
   const nextChalkId = () => {
-    const range = employeeRange[form.employeeCode as keyof typeof employeeRange]
-    const usedNumbers = usedNumbersByEmployee[form.employeeCode]
-    const freeNumber = Array.from({ length: range.max - range.min + 1 }, (_, index) => range.min + index).find(
-      (number) => !usedNumbers.includes(number)
-    )
+    const freeNumber = findNextNumber(form.employeeCode, usedNumbers[form.employeeCode])
 
-    return freeNumber ? `${freeNumber}` : `ID-Bereich-voll gehe online um weitere IDs zu generieren`
+    return freeNumber === null
+      ? 'ID-Bereich voll - online neuen Bereich zuweisen'
+      : `${freeNumber}`
   }
 
   const handleChange = (
@@ -53,15 +51,60 @@ export default function App() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    const freeNumber = findNextNumber(form.employeeCode, usedNumbers[form.employeeCode])
+    const dimensions = [Number(form.length), Number(form.width), Number(form.height)]
+
+    if (freeNumber === null) {
+      setFormError('Der ID-Bereich ist voll. Bitte gehe online.')
+      return
+    }
+
+    if (
+      form.material.trim() === '' ||
+      dimensions.some((dimension) => !Number.isInteger(dimension) || dimension <= 0)
+    ) {
+      setFormError('Material und positive Maße in Millimetern sind erforderlich.')
+      return
+    }
+
+    const restItem: RestItem = {
+      id: crypto.randomUUID(),
+      chalkId: freeNumber,
+      employeeCode: form.employeeCode,
+      material: form.material.trim(),
+      length: dimensions[0],
+      width: dimensions[1],
+      height: dimensions[2],
+      notes: form.notes.trim(),
+    }
+
+    setUsedNumbers((current) => ({
+      ...current,
+      [form.employeeCode]: [...current[form.employeeCode], freeNumber],
+    }))
+    setRestItems((current) => [...current, restItem])
+    setLastSavedId(freeNumber)
+    setFormError('')
+    setForm((current) => ({
+      ...current,
+      material: '',
+      length: '',
+      width: '',
+      height: '',
+      notes: '',
+    }))
+
     console.log('Gespeichert:', {
       ...form,
-      chalkId: nextChalkId(),
+      chalkId: freeNumber,
     })
   }
 
   return (
     <main style={{ padding: '32px', maxWidth: '800px', margin: '0 auto' }}>
       <h1>Neues Reststück</h1>
+      {lastSavedId !== null && <p>Gespeichert mit Kreide-ID {lastSavedId}</p>}
+      {formError !== '' && <p>{formError}</p>}
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '16px' }}>
@@ -105,6 +148,21 @@ export default function App() {
 
         <button type="submit">Speichern</button>
       </form>
+
+      <section>
+        <h2>Gespeicherte Reststücke</h2>
+        {restItems.length === 0 ? (
+          <p>Noch keine Reststücke gespeichert.</p>
+        ) : (
+          <ul>
+            {restItems.map((item) => (
+              <li key={item.id}>
+                {item.employeeCode}-{item.chalkId}: {item.material} ({item.length} x {item.width} x {item.height} mm)
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </main>
   )
 }

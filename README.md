@@ -1,156 +1,129 @@
 # Kreideheld
 
-Kreideheld ist eine Offline-first SaaS-Webanwendung für Schreinereien und andere
-Handwerksbetriebe zur Verwaltung von Restmaterial (Massivholz, Plattenmaterial,
-Rollenware). Jedes Reststück wird über eine vom System vergebene, vierstellige
-Kreidenummer identifiziert, die händisch auf das physische Material geschrieben
-wird. Mitarbeiter können anhand von Mindestmaßen passende Reste finden, ohne das
-Lager manuell durchsuchen zu müssen.
+Kreideheld ist eine Offline-first-Anwendung für Schreinereien und Handwerksbetriebe zur Verwaltung von Restmaterialien. Ziel ist es, Reststücke mit einer Kreidenummer zu erfassen, schnell passende Lagerbestände zu finden und dabei auch ohne stabile Internetverbindung arbeiten zu können.
 
-## Inhaltsverzeichnis
+## Aktueller Stand
 
-- [Konzept](#konzept)
-- [Architektur-Überblick](#architektur-überblick)
-- [Tech-Stack](#tech-stack)
-- [Projektstruktur](#projektstruktur)
-- [Datenmodell](#datenmodell)
-- [Multi-Tenancy](#multi-tenancy)
-- [Offline-Sync-Konzept](#offline-sync-konzept)
-- [Setup](#setup)
-- [Entwicklungs-Workflow](#entwicklungs-workflow)
-- [Roadmap](#roadmap)
+Der aktuelle Stand ist ein funktionierender Grundbau für das Projekt, aber noch kein vollständiger Produkt-Lebenszyklus. Die wichtigsten Punkte:
 
-## Konzept
+### Bereits umgesetzt
 
-Ein Betrieb (Chef-Account) registriert sich per E-Mail und verwaltet darüber
-ein eigenes Mandanten-Konto. Der Chef legt Mitarbeiter-Unteraccounts an, die
-über eine systemseitig vergebene Kennung ohne eigene Registrierung einloggen.
+- Backend mit FastAPI als API-Server
+- SQLAlchemy-Modelle für Tenants, Accounts, Rest-Typen und Reststücke
+- CRUD-Endpunkte für Tenants, Rest-Typen und Reststücke
+- Basis-Login-Flow für Tenant-Accounts
+- Erste Backend-Tests für Auth und Reststück-CRUD
+- Frontend-Prototyp mit Formular zur Erfassung von Reststücken im lokalen Browser
+- lokale Speicherung mit localStorage statt vollständiger Offline-Sync-Schicht
 
-Der Chef definiert in den Einstellungen frei, welche Rest-Typen es in seinem
-Betrieb gibt (z. B. "Massivholz", "Plattenmaterial", "Kantenband") und welche
-Maßfelder für jeden Typ erfasst werden sollen (Stärke/Höhe, Länge, Breite,
-Restmeter). Zusätzlich stellt er ein, ob Maße in Millimeter oder Zentimeter
-angezeigt werden sollen – gespeichert wird intern immer in Millimeter.
+### Noch nicht oder nur teilweise umgesetzt
 
-Mitarbeiter sehen ausschließlich die vom Chef konfigurierte Eingabemaske und
-haben keinen Zugriff auf Preisinformationen.
+- vollständiger Multi-Tenant-Login mit Chef- und Mitarbeiterrollen
+- echte Mitarbeiter- und Tenant-Authentifizierung mit sicherem, durchgereichten Scope
+- Frontend-Ansichten für Chef-Admin, Mitarbeiter und Lagerabfrage
+- IndexedDB/Dexie-Offline-Speicherung
+- Sync-Schicht mit Outbox und Konfliktlösung
+- PWA/App-Shell für echte Offline-Erreichbarkeit
+- Row-Level-Security oder andere Mandanten-Absicherungen auf Datenbankebene
+- echte Produktions-Features wie Billing, Abo-Status oder Verifikation
 
-## Architektur-Überblick
+## Produktidee
 
-```
-┌─────────────────┐        REST/JSON         ┌──────────────────┐
-│  React Frontend  │ ◄──────────────────────► │  FastAPI Backend  │
-│  (Vite + TS)     │                          │                    │
-│                  │                          └─────────┬──────────┘
-│  ┌────────────┐  │                                    │
-│  │ IndexedDB  │  │  Offline-Cache & Outbox            │
-│  │ (Dexie.js) │  │                                    ▼
-│  └────────────┘  │                          ┌──────────────────┐
-│                  │                          │   PostgreSQL      │
-│  Workbox / PWA   │                          │  (shared DB,      │
-│  (App-Shell-     │                          │   tenant_id auf   │
-│   Caching)       │                          │   jeder Zeile)    │
-└─────────────────┘                          └──────────────────┘
-```
+Die Anwendung soll in zwei Ebenen funktionieren:
 
-Das Frontend arbeitet offline-first: Lesezugriffe kommen primär aus IndexedDB,
-Schreibzugriffe landen zunächst lokal und in einer Outbox-Tabelle, die bei
-bestehender Verbindung mit dem Backend synchronisiert wird.
+1. Chef-Account
+   - verwaltet Mandant und Richtlinien
+   - legt Rest-Typen und Maße fest
+   - definiert, welche Felder für welche Materialart relevant sind
 
-## Tech-Stack
+2. Mitarbeiter-Account
+   - kann Reststücke erfassen oder nach passenden Materialresten suchen
+   - sieht nur die für den Betrieb konfigurierten Felder
+   - arbeitet in der Praxis oft mobil und offline
 
-| Bereich              | Technologie                          | Begründung |
-|----------------------|---------------------------------------|------------|
-| Backend-Framework    | FastAPI (Python)                     | Async-nativ, automatische OpenAPI-Doku, passt zu bestehender Python-Erfahrung |
-| ORM / Migrationen    | SQLAlchemy + Alembic                 | Ausgereift, explizite Kontrolle über Schema-Änderungen |
-| Datenbank            | PostgreSQL                            | Relational, robust, gute Unterstützung für UUIDs und JSONB |
-| Auth                 | JWT (python-jose), Passlib           | Zustandslose Auth, passend für Mobile/PWA-Clients |
-| Frontend-Build       | Vite                                  | Schneller Dev-Server, moderner Standard gegenüber CRA |
-| Frontend-Framework   | React + TypeScript                    | Typsicherheit, breite Marktrelevanz |
-| Lokale Datenhaltung  | Dexie.js (IndexedDB-Wrapper)          | Promise-basierte, angenehme API für Offline-Speicherung |
-| Server State         | TanStack Query                        | Caching, Retry-Logik, Ladezustände |
-| PWA / Offline-Shell  | vite-plugin-pwa (Workbox)             | Standardweg, Workbox mit Vite zu verbinden |
-| Containerisierung    | Docker Compose (für PostgreSQL)       | Reproduzierbare lokale Datenbank ohne native Installation |
+Das Kernprinzip ist dabei: Ein Reststück bekommt eine interne Kreidenummer, die am Material selbst vermerkt wird. So kann ein Mitarbeiter das passende Teil finden, ohne das komplette Lager manuell zu durchsuchen.
 
-## Projektstruktur
+## Technischer Stand
+
+### Backend
+
+Das Backend ist bereits als API-Server mit den wichtigsten Modulen aufgebaut:
+
+- `app/main.py` als Einstiegspunkt
+- `app/models.py` mit den zentralen Datenmodellen
+- `app/routers/*.py` für Auth, Tenants, Accounts, Rest-Typen und Reststücke
+- SQLAlchemy mit lokalem Entwicklungsmodell und PostgreSQL-fähiger Struktur
+
+Die aktuellen Tests bestätigen, dass die grundlegende Auth- und CRUD-Logik in ihrer jetzigen Form lauffähig ist.
+
+### Frontend
+
+Das Frontend ist aktuell ein funktionaler Prototyp. Es kann Reststücke lokal im Browser erfassen, aber es ist noch kein vollständiges Produkt-Frontend mit:
+
+- realer Tenant-Auswahl
+- Mitarbeiter-Login
+- Suche nach passenden Reststücken
+- Datenbank-/Sync-Schicht
+- Offline-Last/Push-Mechanik
+
+## Architektur-Zielbild
+
+Der langfristige Aufbau sieht so aus:
 
 ```
-kreideheld/
-├── docker-compose.yml          # PostgreSQL-Container für lokale Entwicklung
-├── backend/
-│   ├── venv/                   # Python Virtual Environment (nicht versioniert)
-│   ├── app/
-│   │   ├── main.py             # FastAPI-Einstiegspunkt
-│   │   ├── config.py           # Settings (liest .env)
-│   │   ├── database.py         # Engine, Session, Base
-│   │   ├── models.py           # SQLAlchemy-Models
-│   │   ├── schemas.py          # Pydantic-Schemas (Request/Response)
-│   │   ├── auth.py             # JWT, Passwort-Hashing, Tenant-Scoping
-│   │   └── routers/            # API-Endpunkte, ein Modul pro Ressource
-│   ├── alembic/                # Datenbank-Migrationen
-│   ├── requirements.txt
-│   └── .env                    # DATABASE_URL etc. (nicht versioniert)
-├── frontend/
-│   ├── src/
-│   │   ├── db/                 # Dexie-Schema, Sync-Logik
-│   │   ├── api/                # API-Client (Axios/Fetch-Wrapper)
-│   │   ├── components/
-│   │   ├── pages/
-│   │   └── context/            # z. B. Einheiten-Kontext (mm/cm)
-│   ├── public/
-│   ├── vite.config.ts          # inkl. vite-plugin-pwa Konfiguration
-│   └── package.json
-└── README.md
+React Frontend
+  ├─ lokale Speicherung (IndexedDB / Dexie)
+  ├─ Outbox für ausstehende Änderungen
+  └─ Sync mit FastAPI
+
+FastAPI Backend
+  ├─ Auth und Mandantenlogik
+  ├─ Rest-Typen und Reststücke
+  └─ API für Sync- und Query-Endpunkte
+
+PostgreSQL
+  ├─ Tenant-gebundene Daten
+  ├─ sensible Datenmodelle
+  └─ später mit RLS / strengerem Tenant-Scoping
 ```
 
-## Datenmodell
+## Aktueller Projektstatus nach Bereichen
 
-Zentrale Tabellen (siehe `backend/app/models.py` für die vollständige Definition):
+### Fertig / stabil genug für Weiterentwicklung
 
-- **`tenants`** – ein Datensatz pro Chef-Account/Betrieb. Enthält E-Mail,
-  Passwort-Hash, Einheiten-Einstellung (mm/cm) und Abo-Status.
-- **`accounts`** – Mitarbeiter-Unteraccounts, gehören zu genau einem Tenant,
-  identifiziert über ein systemseitig vergebenes Kürzel (z. B. `MA1`).
-- **`rest_typ_definitionen`** – vom Chef frei benannte Rest-Typen inklusive
-  Konfiguration, welche Maßfelder (Stärke/Höhe, Länge, Breite, Restmeter)
-  angezeigt werden und ob die Maßsuche eine gedrehte Eingabe akzeptiert.
-- **`material_catalog`** – Materialarten/Holzarten, jeweils einem Rest-Typ
-  zugeordnet.
-- **`reste`** – die eigentlichen Lagerbestände. Maße werden ausschließlich in
-  Millimeter gespeichert; die Kreidenummer ist nur innerhalb eines Tenants
-  eindeutig.
+- Grundstruktur des Projekts
+- FastAPI-Backend und erste API-Routen
+- Datenmodell für Kernobjekte
+- erste Tests
+- lokaler Frontend-Prototyp zur Erfassung von Reststücken
 
-Alle synchronisierbaren Tabellen führen `updated_at`, `deleted_at` (Soft
-Delete) und, wo relevant, `synced_at` mit, um Offline-Synchronisation und
-Last-Write-Wins-Konfliktauflösung zu ermöglichen.
+### In Arbeit / nächster Schritt
 
-## Multi-Tenancy
+- vollständige Auth- und Rollenlogik
+- saubere Tenant-Scoping-Implementierung
+- weitere Frontend-Seiten und echte Bedienflüsse
+- lokale Datenhaltung mit Dexie und Offline-Strategie
 
-Es wird eine gemeinsame Datenbank mit Mandantentrennung über `tenant_id`
-verwendet (Shared-Database-Ansatz), nicht separate Datenbanken pro Chef. Das
-ist der in SaaS-Anwendungen übliche Ansatz und deutlich wartungsärmer als
-Datenbank- oder Schema-pro-Mandant-Lösungen.
+### Geplant / noch offen
 
-**Wichtige Regel:** Jede Datenbankabfrage auf mandantenspezifische Tabellen
-muss nach `tenant_id` filtern. Die `tenant_id` wird serverseitig aus dem
-JWT-Token extrahiert (nie aus Client-Eingaben übernommen) und über eine
-FastAPI-Dependency in jeden Router injiziert. Als zusätzliche Absicherung ist
-mittelfristig Row-Level-Security (RLS) auf PostgreSQL-Ebene vorgesehen.
+- Sync-Endpunkte (`/sync/pull`, `/sync/push`)
+- Konfliktauflösung mit Last-Write-Wins
+- PWA-Setup mit Workbox
+- Row-Level-Security in PostgreSQL
+- Mitarbeiter-Suche nach Mindestmaßen
+- Admin-Konfiguration von Rest-Typen und Maßfeldern im Frontend
+- Abo- und Billing-Integration
 
-## Offline-Sync-Konzept
+## Entwicklungsreihenfolge
 
-- **Lesen:** Das Frontend liest primär aus IndexedDB (Dexie). Nach jedem
-  erfolgreichen API-Call wird die lokale Kopie aktualisiert.
-- **Schreiben:** Änderungen werden sofort lokal gespeichert und zusätzlich in
-  eine `pendingChanges`-Tabelle (Outbox-Pattern) geschrieben.
-- **Sync:** Sobald eine Verbindung besteht, verarbeitet eine Sync-Routine die
-  Outbox über zwei Endpunkte:
-  - `GET /sync/pull?since=<timestamp>` – alle serverseitigen Änderungen seit
-    dem letzten Abgleich.
-  - `POST /sync/push` – alle lokal ausstehenden Änderungen.
-- **Konfliktauflösung:** Last-Write-Wins anhand `updated_at`. IDs werden
-  clientseitig als UUID erzeugt, um Kollisionen bei parallelem Offline-Anlegen
-  zu vermeiden.
+Die Reihenfolge ist bewusst so gewählt, dass die wichtigsten Grundbausteine sauber funktionieren, bevor Offline-/PWA-Komplexität hinzukommt:
+
+1. Backend und API-Grundlagen
+2. Auth und Tenant-Konzept
+3. Frontend online-only, ohne Offline-Sync
+4. Dexie/IndexedDB als lokale Datenquelle
+5. Outbox-Sync und Konfliktlogik
+6. PWA/Workbox und echte Offline-Erreichbarkeit
 
 ## Setup
 
@@ -160,25 +133,15 @@ mittelfristig Row-Level-Security (RLS) auf PostgreSQL-Ebene vorgesehen.
 - Node.js 20+
 - Docker & Docker Compose
 
-### PostgreSQL starten
-
-```bash
-docker compose up -d
-```
-
 ### Backend
 
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+source venv/bin/activate    # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env             # Datenbank-URL ggf. anpassen
-alembic upgrade head
 uvicorn app.main:app --reload
 ```
-
-API-Dokumentation ist danach unter `http://localhost:8000/docs` erreichbar.
 
 ### Frontend
 
@@ -188,30 +151,35 @@ npm install
 npm run dev
 ```
 
-Frontend läuft standardmäßig unter `http://localhost:5173`.
+### PostgreSQL (falls lokal verwendet)
 
-## Entwicklungs-Workflow
+```bash
+docker compose up -d
+```
 
-Das Projekt wird bewusst in dieser Reihenfolge aufgebaut, um nicht mehrere
-Fehlerquellen gleichzeitig debuggen zu müssen:
+## Tests
 
-1. Backend + PostgreSQL: CRUD-Endpunkte, online-only, über `/docs` getestet
-2. Frontend online-only: alle Screens funktional gegen die API, ohne
-   IndexedDB oder Sync-Logik
-3. IndexedDB als Lesecache (Dexie)
-4. Outbox-Pattern für Schreibvorgänge inkl. Sync-Routine
-5. PWA/Workbox zuletzt: App-Shell-Caching für Offline-Erreichbarkeit der
-   Anwendung selbst
+Im Backend gibt es bereits erste Testfälle für Login und Reststück-CRUD:
+
+```bash
+cd backend
+pytest -q
+```
 
 ## Roadmap
 
-- [ ] Basis-Schema und Migrationen (Tenants, Accounts, Rest-Typen, Reste)
-- [ ] Auth: Chef-Login (E-Mail/Passwort), Mitarbeiter-Login (Tenant-Code + Kürzel)
-- [ ] CRUD-Endpunkte für Reste und Materialkatalog (online-only)
-- [ ] Konfigurierbare Rest-Typ-Verwaltung im Chef-Frontend
-- [ ] Einheiten-Umrechnung (mm/cm) im Frontend
-- [ ] IndexedDB-Integration (Dexie)
-- [ ] Sync-Endpunkte (`/sync/pull`, `/sync/push`) und Outbox-Logik im Client
-- [ ] PWA-Konfiguration mit vite-plugin-pwa
-- [ ] Row-Level-Security in PostgreSQL als zusätzliche Mandanten-Absicherung
-- [ ] Abo-/Billing-Anbindung für Chef-Accounts
+- [x] Projektstruktur und Basis-Backend
+- [x] Kernmodelle für Tenants, Accounts und Reststücke
+- [x] erste API-Endpunkte und Tests
+- [x] lokaler Frontend-Prototyp zur Erfassung von Reststücken
+- [ ] vollständige Auth- und Rollenlogik
+- [ ] Admin-Frontend für Rest-Typ-Konfiguration
+- [ ] lokale Datenhaltung mit IndexedDB/Dexie
+- [ ] Offline-Sync und Outbox
+- [ ] PWA-Setup und Offline-App-Shell
+- [ ] Mandanten-Absicherung mit RLS / Produktionstauglichkeit
+- [ ] Billing und Betriebsverwaltung
+
+## Kurzfazit
+
+Das Projekt ist derzeit in der Phase eines funktionierenden Grundgerüsts: Das Backend und ein lokaler Frontend-Prototyp existieren bereits, aber die echte Produkt-Logik rund um Rollen, Offline-Synchronisation, Mandantentrennung und Produkt-Frontend ist noch offen und wird in der nächsten Entwicklungsphase umgesetzt.

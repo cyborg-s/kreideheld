@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kreideheld – Restlager Übersicht</title>
+<title>Kreideheld Mockup – Restlager Übersicht</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Kalam:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -173,7 +173,15 @@
     height:38px;
   }
   .filters .reset:hover{border-color:var(--wood); color:var(--wood);}
-
+  .logout-link{
+    color:var(--honey-soft);
+    font-size:12.5px;
+    cursor:pointer;
+    text-decoration:underline;
+    background:none;border:none;
+    font-family:'Inter',sans-serif;
+    font-size:16px;
+  }
   .meta-row{
     display:flex;
     justify-content:space-between;
@@ -407,11 +415,12 @@
   <div class="brand">
     <div class="brand-mark">K</div>
     <div class="brand-text">
-      <h1>Kreideheld</h1>
+      <h1>Kreideheld Mockup</h1>
       <span>Restlager · Schreinerei Mustermann</span>
     </div>
   </div>
   <div class="account-pill"><span class="dot"></span> Hauptaccount · Chef</div>
+  <a class="logout-link" href="./kreideheld-mitarbeiter_mockup.html">Mitarbeiter ansicht</a>
 </header>
 
 <main>
@@ -485,7 +494,7 @@
   </div>
 </main>
 
-<footer class="note">Mockup-Ansicht · Daten werden im Backend in einer Datenbank gespeichert und hier nur als Präsentation dargestellt.</footer>
+<footer class="note">Mockup-Ansicht · Daten werden lokal nur als Präsentation dargestellt nicht gespeicher! <a href="https://sascha-nyssen.de/imprint">Impressum</a></footer>
 
 <!-- MODAL: Anlegen/Bearbeiten -->
 <div class="modal-backdrop" id="modal-backdrop">

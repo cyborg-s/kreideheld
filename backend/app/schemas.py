@@ -1,6 +1,8 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
+
+from app.models import AccountRole
 
 
 class LoginRequest(BaseModel):
@@ -30,13 +32,23 @@ class TenantRead(TenantCreate):
 
 
 class AccountCreate(BaseModel):
-    code: str
-    display_name: str
+    name: str
+    email: Optional[str] = None
+    role: AccountRole
+    password_change_required: bool = True
+
+    @model_validator(mode="after")
+    def privileged_accounts_require_email(self):
+        if self.role in {AccountRole.OWNER, AccountRole.ADMIN} and self.email is None:
+            raise ValueError("OWNER and ADMIN accounts require an email address")
+        return self
 
 
 class AccountRead(AccountCreate):
     id: str
     tenant_id: str
+    account_id: str
+    password_change_required: bool
     model_config = ConfigDict(from_attributes=True)
 
 

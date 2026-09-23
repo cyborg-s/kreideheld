@@ -1,9 +1,24 @@
+import secrets
+import string
+from enum import Enum
 from uuid import uuid4
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, JSON, String, func
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, Enum as SqlEnum, ForeignKey, Integer, JSON, String, func
 from sqlalchemy.orm import relationship
 
 from app.database import Base
+
+
+class AccountRole(str, Enum):
+    OWNER = "OWNER"
+    ADMIN = "ADMIN"
+    EMPLOYEE = "EMPLOYEE"
+
+
+def generate_account_id() -> str:
+    prefix = "".join(secrets.choice(string.ascii_uppercase) for _ in range(2))
+    number = secrets.randbelow(1_000_000)
+    return f"{prefix}-{number:06d}"
 
 
 class Tenant(Base):
@@ -24,11 +39,20 @@ class Tenant(Base):
 
 class Account(Base):
     __tablename__ = "accounts"
+    __table_args__ = (
+        CheckConstraint(
+            "role = 'EMPLOYEE' OR email IS NOT NULL",
+            name="ck_accounts_privileged_email",
+        ),
+    )
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
     tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=False, index=True)
-    code = Column(String(50), nullable=False, unique=True, index=True)
-    display_name = Column(String(255), nullable=False)
+    account_id = Column(String(9), nullable=False, unique=True, index=True, default=generate_account_id)
+    name = Column(String(255), nullable=False)
+    email = Column(String(255), nullable=True, unique=True, index=True)
+    role = Column(SqlEnum(AccountRole, native_enum=False, create_constraint=True), nullable=False)
+    password_change_required = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 

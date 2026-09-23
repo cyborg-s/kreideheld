@@ -1,11 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.database import Base, engine
-from app.models import Account, RestItem, RestTypeDefinition, Tenant
 from app.routers import accounts, auth, rest_items, rest_types, tenants
-
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Kreideheld API")
 

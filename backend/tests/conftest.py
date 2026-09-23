@@ -7,8 +7,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-# This is set before importing the application so app.main's create_all call
-# cannot open the development SQLite database during test collection.
+# This is set before importing the application so test collection uses an
+# isolated in-memory SQLite configuration.
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["DEBUG"] = "false"
 

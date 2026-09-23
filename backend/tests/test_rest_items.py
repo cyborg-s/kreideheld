@@ -1,16 +1,7 @@
 from fastapi.testclient import TestClient
 
-from app.database import Base, engine
-from app.main import app
 
-
-def setup_function():
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
-
-
-def test_rest_item_crud_flow():
-    client = TestClient(app)
+def test_rest_item_crud_flow(client: TestClient):
 
     tenant_response = client.post(
         "/tenants",

@@ -151,5 +151,5 @@ temp/
 *.bak
 
 
-# Local database backups
-backend/*backup.db
+# Local development databases
+backend/*.db

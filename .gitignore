@@ -149,3 +149,7 @@ tmp/
 temp/
 *.tmp
 *.bak
+
+
+# Local database backups
+backend/*backup.db

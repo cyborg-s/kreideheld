@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict
 
 from app.models import AccountRole
 
@@ -31,24 +31,37 @@ class TenantRead(TenantCreate):
 
 
 class AccountCreate(BaseModel):
+    """Client-controlled input for the authenticated account-onboarding flow."""
+
     name: str
     email: Optional[str] = None
     role: AccountRole
-    password_change_required: bool = True
 
-    @model_validator(mode="after")
-    def privileged_accounts_require_email(self):
-        if self.role in {AccountRole.OWNER, AccountRole.ADMIN} and self.email is None:
-            raise ValueError("OWNER and ADMIN accounts require an email address")
-        return self
+    model_config = ConfigDict(extra="forbid")
 
 
-class AccountRead(AccountCreate):
+class AccountRead(BaseModel):
+    """Normal account representation without credential material."""
+
     id: str
     tenant_id: str
     account_id: str
+    name: str
+    email: Optional[str] = None
+    role: AccountRole
     password_change_required: bool
     model_config = ConfigDict(from_attributes=True)
+
+
+class AccountOnboardingResponse(BaseModel):
+    """One-time response containing the initial plaintext credential."""
+
+    account_id: str
+    name: str
+    email: Optional[str] = None
+    role: AccountRole
+    password_change_required: bool
+    temporary_password: str
 
 
 class RestTypeCreate(BaseModel):

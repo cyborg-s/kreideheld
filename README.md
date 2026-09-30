@@ -1,185 +1,256 @@
 # Kreideheld
 
-Kreideheld ist eine Offline-first-Anwendung für Schreinereien und Handwerksbetriebe zur Verwaltung von Restmaterialien. Ziel ist es, Reststücke mit einer Kreidenummer zu erfassen, schnell passende Lagerbestände zu finden und dabei auch ohne stabile Internetverbindung arbeiten zu können.
+Kreideheld ist eine Offline-first-Anwendung für Schreinereien und Handwerksbetriebe. Sie soll Restmaterialien mit einer Kreidenummer erfassbar und auffindbar machen – auch dann, wenn die Internetverbindung in der Werkstatt nicht stabil ist.
 
-## Aktueller Stand
+Der aktuelle Stand ist ein Entwicklungsstand, **keine produktionsfertige SaaS-Anwendung**. Die Account-, Passwort- und Session-Grundlagen sind implementiert; Offline-Sync, vollständige Ressourcen-Absicherung und das Produkt-Frontend folgen später.
 
-Der aktuelle Stand ist ein funktionierender Grundbau für das Projekt, aber noch kein vollständiger Produkt-Lebenszyklus. Die wichtigsten Punkte:
+## Projektstatus
 
-### Bereits umgesetzt
+### Implementiert
 
-- Backend mit FastAPI als API-Server
-- SQLAlchemy-Modelle für Tenants, Accounts, Rest-Typen und Reststücke
-- CRUD-Endpunkte für Tenants, Rest-Typen und Reststücke
-- Basis-Login-Flow für Tenant-Accounts
-- Erste Backend-Tests für Auth und Reststück-CRUD
-- Frontend-Prototyp mit Formular zur Erfassung von Reststücken im lokalen Browser
-- lokale Speicherung mit localStorage statt vollständiger Offline-Sync-Schicht
+- FastAPI-REST-Backend mit SQLAlchemy und Pydantic
+- SQLite für die lokale Entwicklung; PostgreSQL-Treiber und Docker-Compose-Konfiguration sind vorhanden
+- Alembic-Migrationen für das Schema
+- Tenant-, Account-, Resttyp- und Reststück-Modelle sowie erste CRUD-Routen
+- Account-Modell mit Rollen, öffentlicher Login-ID, Argon2id-Passwort-Hash und Passwortwechselstatus
+- Account-Authentifizierung, serverseitige Sessions und HttpOnly-Session-Cookie
+- `current_account` als serverseitig aus der Datenbank geladener Request-Kontext
+- RBAC und Tenant-Isolation für die **Account-Erstellung**
+- pytest-Suite mit isolierter In-Memory-SQLite-Datenbank (`90 passed`, zuletzt verifiziert)
+- React-/TypeScript-/Vite-Frontend als Prototyp
 
-### Noch nicht oder nur teilweise umgesetzt
+### In Entwicklung / teilweise implementiert
 
-- vollständiger Multi-Tenant-Login mit Chef- und Mitarbeiterrollen
-- echte Mitarbeiter- und Tenant-Authentifizierung mit sicherem, durchgereichten Scope
-- Frontend-Ansichten für Chef-Admin, Mitarbeiter und Lagerabfrage
-- IndexedDB/Dexie-Offline-Speicherung
-- Sync-Schicht mit Outbox und Konfliktlösung
-- PWA/App-Shell für echte Offline-Erreichbarkeit
-- Row-Level-Security oder andere Mandanten-Absicherungen auf Datenbankebene
-- echte Produktions-Features wie Billing, Abo-Status oder Verifikation
+- Ressourcenrouten für Resttypen und Reststücke existieren, benötigen aber noch vollständiges, konsistentes Tenant-Scoping und eine Autorisierungsprüfung
+- Das Frontend enthält vorhandene React-, Dexie-, React-Query- und PWA-Abhängigkeiten, ist aber noch nicht vollständig mit dem Backend, der Authentifizierung und einer Sync-Schicht integriert
+- PostgreSQL ist als späterer produktionsnaher Datenbankbetrieb vorbereitet, die lokale Entwicklung verwendet derzeit SQLite
 
-## Produktidee
+### Geplant
 
-Die Anwendung soll in zwei Ebenen funktionieren:
+- OWNER-/Tenant-Registrierung
+- Passwortwechsel und globale Durchsetzung von `password_change_required`
+- Offline-Datenhaltung, Outbox-Sync und Konfliktauflösung
+- PWA-/App-Shell-Ausbau
+- Produktions- und Deployment-Hardening
 
-1. Chef-Account
-   - verwaltet Mandant und Richtlinien
-   - legt Rest-Typen und Maße fest
-   - definiert, welche Felder für welche Materialart relevant sind
+## Architekturüberblick
 
-2. Mitarbeiter-Account
-   - kann Reststücke erfassen oder nach passenden Materialresten suchen
-   - sieht nur die für den Betrieb konfigurierten Felder
-   - arbeitet in der Praxis oft mobil und offline
-
-Das Kernprinzip ist dabei: Ein Reststück bekommt eine interne Kreidenummer, die am Material selbst vermerkt wird. So kann ein Mitarbeiter das passende Teil finden, ohne das komplette Lager manuell zu durchsuchen.
-
-## Technischer Stand
-
-### Backend
-
-Das Backend ist bereits als API-Server mit den wichtigsten Modulen aufgebaut:
-
-- `app/main.py` als Einstiegspunkt
-- `app/models.py` mit den zentralen Datenmodellen
-- `app/routers/*.py` für Auth, Tenants, Accounts, Rest-Typen und Reststücke
-- SQLAlchemy mit lokalem Entwicklungsmodell und PostgreSQL-fähiger Struktur
-
-Die aktuellen Tests bestätigen, dass die grundlegende Auth- und CRUD-Logik in ihrer jetzigen Form lauffähig ist.
-
-### Frontend
-
-Das Frontend ist aktuell ein funktionaler Prototyp. Es kann Reststücke lokal im Browser erfassen, aber es ist noch kein vollständiges Produkt-Frontend mit:
-
-- realer Tenant-Auswahl
-- Mitarbeiter-Login
-- Suche nach passenden Reststücken
-- Datenbank-/Sync-Schicht
-- Offline-Last/Push-Mechanik
-
-## Architektur-Zielbild
-
-Der langfristige Aufbau sieht so aus:
-
-```
-React Frontend
-  ├─ lokale Speicherung (IndexedDB / Dexie)
-  ├─ Outbox für ausstehende Änderungen
-  └─ Sync mit FastAPI
-
-FastAPI Backend
-  ├─ Auth und Mandantenlogik
-  ├─ Rest-Typen und Reststücke
-  └─ API für Sync- und Query-Endpunkte
-
-PostgreSQL
-  ├─ Tenant-gebundene Daten
-  ├─ sensible Datenmodelle
-  └─ später mit RLS / strengerem Tenant-Scoping
+```text
+React / TypeScript / Vite (Prototyp)
+              |
+           REST API
+              |
+           FastAPI
+              |
+          Services
+              |
+         SQLAlchemy ORM
+              |
+ SQLite lokal / PostgreSQL später
 ```
 
-## Aktueller Projektstatus nach Bereichen
+- **Pydantic** beschreibt und validiert HTTP-Request- und Response-Schemas.
+- **SQLAlchemy** bildet Modelle ab und verwendet gebundene Parameter für Datenbankzugriffe.
+- **Alembic** versioniert Produktions- und Entwicklungsdatenbankschemas.
+- **pytest** testet Services und HTTP-Routen gegen eine isolierte In-Memory-Datenbank.
 
-### Fertig / stabil genug für Weiterentwicklung
+## Tenant und Account-Modell
 
-- Grundstruktur des Projekts
-- FastAPI-Backend und erste API-Routen
-- Datenmodell für Kernobjekte
-- erste Tests
-- lokaler Frontend-Prototyp zur Erfassung von Reststücken
+Ein Tenant ist ein Unternehmen. Ein Tenant kann mehrere Accounts besitzen:
 
-### In Arbeit / nächster Schritt
+```text
+Tenant
+  └── Accounts
+```
 
-- vollständige Auth- und Rollenlogik
-- saubere Tenant-Scoping-Implementierung
-- weitere Frontend-Seiten und echte Bedienflüsse
-- lokale Datenhaltung mit Dexie und Offline-Strategie
+Ein Account besitzt derzeit:
 
-### Geplant / noch offen
+```text
+interne UUID
+tenant_id
+account_id       # öffentliche Login-ID, z. B. AB-123456
+name
+email            # optional; für ADMIN erforderlich
+role
+password_hash
+password_change_required
+created_at
+updated_at
+```
 
-- Sync-Endpunkte (`/sync/pull`, `/sync/push`)
-- Konfliktauflösung mit Last-Write-Wins
-- PWA-Setup mit Workbox
-- Row-Level-Security in PostgreSQL
-- Mitarbeiter-Suche nach Mindestmaßen
-- Admin-Konfiguration von Rest-Typen und Maßfeldern im Frontend
-- Abo- und Billing-Integration
+Die interne UUID ist der technische Primärschlüssel. `account_id` ist die für Menschen bestimmte öffentliche Login-ID im Format `XX-123456`; sie ist keine geheime Kennung.
 
-## Entwicklungsreihenfolge
+Verfügbare Rollen:
 
-Die Reihenfolge ist bewusst so gewählt, dass die wichtigsten Grundbausteine sauber funktionieren, bevor Offline-/PWA-Komplexität hinzukommt:
+- `OWNER`
+- `ADMIN`
+- `EMPLOYEE`
 
-1. Backend und API-Grundlagen
-2. Auth und Tenant-Konzept
-3. Frontend online-only, ohne Offline-Sync
-4. Dexie/IndexedDB als lokale Datenquelle
-5. Outbox-Sync und Konfliktlogik
-6. PWA/Workbox und echte Offline-Erreichbarkeit
+## Account-Onboarding und RBAC
 
-## Setup
+Der geschützte Account-Erstellungsflow folgt diesem Ablauf:
 
-### Voraussetzungen
+```text
+Session-Cookie
+  → current_account
+  → Rollenprüfung
+  → current_account.tenant_id
+  → AccountOnboardingService
+  → neuer Account + einmaliges Initialpasswort
+```
 
-- Python 3.11+
-- Node.js 20+
-- Docker & Docker Compose
+Die aktuell implementierte Matrix lautet:
 
-### Backend
+| Handelnder Account | Darf erstellen |
+| --- | --- |
+| OWNER | ADMIN, EMPLOYEE |
+| ADMIN | EMPLOYEE |
+| EMPLOYEE | niemanden |
 
-```bash
+Ein OWNER kann über diesen Onboarding-Flow nicht erstellt werden. Die spätere OWNER-/Tenant-Registrierung ist noch nicht implementiert.
+
+Der Client kann beim Account-POST weder `tenant_id`, `password_change_required`, Passwort-Hash noch Creator-Rolle bestimmen. Der neue Account erhält seinen Tenant ausschließlich aus `current_account.tenant_id` und `password_change_required=True`.
+
+Die erfolgreiche Onboarding-Antwort enthält bewusst nur `account_id`, Name, E-Mail, Rolle, Passwortwechselstatus und das **einmalige** `temporary_password`. Sie enthält keinen Hash, keine Tenant-ID, keine interne UUID und keine Sessiondaten. Das normale `AccountRead` enthält niemals ein Initialpasswort.
+
+## Passwortarchitektur
+
+`PasswordService` kapselt Hashing, Verify und Rehash mit **Argon2id** über `argon2-cffi`:
+
+| Einstellung | Wert |
+| --- | --- |
+| Memory Cost | 64 MiB |
+| Time Cost | 3 |
+| Parallelism | 4 |
+| Salt | 16 Byte |
+| Hash | 32 Byte |
+
+Selbst gewählte Passwörter müssen mindestens 12 Zeichen besitzen und mindestens drei von vier Kategorien enthalten: Kleinbuchstaben, Großbuchstaben, Zahlen und Sonderzeichen.
+
+Automatisch erzeugte Initialpasswörter sind exakt 12 Zeichen lang, erfüllen garantiert alle vier Kategorien und verwenden `secrets`. Die leicht verwechselbaren Zeichen `0`, `O`, `1`, `l` und `I` werden nicht verwendet. Das Klartextpasswort wird nur bei der Anlage zurückgegeben; anschließend wird ausschließlich sein Argon2id-Hash gespeichert.
+
+## Login und Sessions
+
+### Login
+
+```text
+POST /auth/login
+```
+
+Request:
+
+```json
+{"identifier": "AB-123456", "password": "…"}
+```
+
+- OWNER und ADMIN können sich mit Account-ID oder E-Mail anmelden.
+- EMPLOYEE kann sich nur mit Account-ID anmelden.
+- Client-Rolle, Client-Tenant-ID und `login_type` sind nicht Teil des Schemas.
+- Ungültige Anmeldungen erhalten immer eine generische `401 Unauthorized`-Antwort; unbekannte Accounts und falsche Passwörter werden nicht unterschieden.
+
+### Serverseitige Session
+
+```text
+Login
+  → AccountAuthenticationService
+  → SessionService
+  → zufälliger Sessiontoken
+  → SHA-256-Hash in der Datenbank
+  → HttpOnly-Cookie im Browser
+```
+
+Die Session-Tabelle enthält interne UUID, `account_id`, `token_hash`, `created_at`, `expires_at` und `revoked_at`. Der Token wird mit `secrets.token_urlsafe(32)` erzeugt (256 Bit Zufallsentropie) und nur als SHA-256-Hash gespeichert. Passwörter benötigen dagegen den bewusst langsamen Argon2id-Hash, weil sie menschlich gewählt und damit viel schwächer sein können.
+
+Cookie-Einstellungen:
+
+| Eigenschaft | Wert |
+| --- | --- |
+| Name | `kreideheld_session` |
+| HttpOnly | `True` |
+| SameSite | `Lax` |
+| Path | `/` |
+| Max-Age | 8 Stunden |
+| Secure | `False` bei `DEBUG=True`, sonst `True` |
+
+Sessiontoken erscheinen weder in JSON noch in Account-Daten oder `localStorage`.
+
+### current_account
+
+Bei einem Folge-Request wird das Cookie nicht als Identitätsquelle vertraut:
+
+```text
+Request
+  → Session-Cookie
+  → Token hashen
+  → gültige, nicht abgelaufene und nicht widerrufene Session laden
+  → aktuellen Account aus der Datenbank laden
+  → current_account
+```
+
+Rolle, Tenant und Passwortwechselstatus stammen daher aus dem aktuellen Account-Datensatz, nicht aus Cookie-Inhalt.
+
+## Datenbankschema und Migrationen
+
+Alembic verwaltet das Schema. Der aktuelle Head ist `20260923_04`.
+
+| Revision | Zweck |
+| --- | --- |
+| `20260923_01` | historische SQLite-Baseline |
+| `20260923_02` | Account-Identity- und Rollenmodell |
+| `20260923_03` | verpflichtendes `password_hash` |
+| `20260923_04` | serverseitige Sessions |
+
+```powershell
 cd backend
-python -m venv venv
-source venv/bin/activate    # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+.\venv\Scripts\python.exe -m alembic current
+.\venv\Scripts\python.exe -m alembic heads
+.\venv\Scripts\python.exe -m alembic upgrade head
 ```
 
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-### PostgreSQL (falls lokal verwendet)
-
-```bash
-docker compose up -d
-```
+Normale Entwicklungsdatenbanken werden über Alembic migriert, nicht über `Base.metadata.create_all()`. `create_all()` bleibt ausschließlich Teil der isolierten In-Memory-Testumgebung.
 
 ## Tests
 
-Im Backend gibt es bereits erste Testfälle für Login und Reststück-CRUD:
-
-```bash
+```powershell
 cd backend
-pytest -q
+.\venv\Scripts\python.exe -m pytest -q
 ```
 
-## Roadmap
+Die Tests verwenden eine isolierte In-Memory-SQLite-Datenbank. Die lokale Entwicklungsdatenbank `backend/kreideheld.db` wird nicht verändert. Abgedeckt sind unter anderem:
 
-- [x] Projektstruktur und Basis-Backend
-- [x] Kernmodelle für Tenants, Accounts und Reststücke
-- [x] erste API-Endpunkte und Tests
-- [x] lokaler Frontend-Prototyp zur Erfassung von Reststücken
-- [ ] vollständige Auth- und Rollenlogik
-- [ ] Admin-Frontend für Rest-Typ-Konfiguration
-- [ ] lokale Datenhaltung mit IndexedDB/Dexie
-- [ ] Offline-Sync und Outbox
-- [ ] PWA-Setup und Offline-App-Shell
-- [ ] Mandanten-Absicherung mit RLS / Produktionstauglichkeit
-- [ ] Billing und Betriebsverwaltung
+- Passwortservice, Passwortpolicy und Initialpasswortgenerator
+- Account-Onboarding und Authentifizierungsservice
+- Session-Erzeugung, Ablauf und Widerruf
+- Login, Cookie und `current_account`
+- RBAC, Tenant-Injection und Response-Sicherheit bei Account-Erstellung
+- erste Reststück-Routen
+- Migrationen auf temporären Datenbankkopien
 
-## Kurzfazit
+SQLAlchemy ORM bzw. gebundene Parameter behandeln Nutzereingaben als Daten. Beispielsweise bleibt `O'Brien; DROP TABLE accounts;` ein normaler Name; Zeichenfilter sind kein SQL-Injection-Schutz.
 
-Das Projekt ist derzeit in der Phase eines funktionierenden Grundgerüsts: Das Backend und ein lokaler Frontend-Prototyp existieren bereits, aber die echte Produkt-Logik rund um Rollen, Offline-Synchronisation, Mandantentrennung und Produkt-Frontend ist noch offen und wird in der nächsten Entwicklungsphase umgesetzt.
+## Noch offen / vor Produktion erforderlich
+
+- `GET /accounts` ist derzeit noch ungeschützt.
+- `password_change_required=True` wird noch nicht global erzwungen; Passwortwechsel fehlt.
+- Logout und Passwort-Reset fehlen.
+- Ein vollständiger CSRF-Schutz für Cookie-basierte Zustandsänderungen fehlt.
+- Rate Limiting und Login-Lockout fehlen.
+- 2FA fehlt.
+- OWNER-/Tenant-Registrierung fehlt.
+- Tenant-Isolation muss für weitere Ressourcenrouten konsequent geprüft und erweitert werden.
+- PostgreSQL-Produktionskonfiguration, Deployment und weiteres Production-Hardening fehlen.
+- Frontend-Backend-Integration, Offline-Sync, Outbox, Konfliktlösung und PWA-Ausbau fehlen.
+
+## Entwicklungsworkflow
+
+```text
+Feature Branch
+  → kleine fachliche Änderung
+  → Tests
+  → Review
+  → Alembic-Prüfung
+  → Commit
+  → Push
+```
+
+Aktuelle Entwicklungsarbeit erfolgt auf `feature/backend-auth`.

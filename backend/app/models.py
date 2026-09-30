@@ -58,6 +58,30 @@ class Account(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     tenant = relationship("Tenant", back_populates="accounts")
+    sessions = relationship(
+        "AccountSession",
+        back_populates="account",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+
+class AccountSession(Base):
+    __tablename__ = "sessions"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    account_id = Column(
+        String(36),
+        ForeignKey("accounts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    token_hash = Column(String(64), nullable=False, unique=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
+
+    account = relationship("Account", back_populates="sessions")
 
 
 class RestTypeDefinition(Base):

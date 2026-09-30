@@ -45,3 +45,14 @@ def test_database() -> Generator[None, None, None]:
 def client() -> Generator[TestClient, None, None]:
     with TestClient(app) as test_client:
         yield test_client
+
+
+@pytest.fixture
+def db_session() -> Generator[Session, None, None]:
+    """Provide an isolated SQLAlchemy session for service-level tests."""
+
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

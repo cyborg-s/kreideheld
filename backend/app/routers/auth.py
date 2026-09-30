@@ -1,25 +1,44 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Tenant
+from app.dependencies.auth import SESSION_COOKIE_NAME, session_cookie_settings
 from app.schemas import LoginRequest, LoginResponse
+from app.services.account_authentication_service import (
+    AccountAuthenticationService,
+    InvalidCredentialsError,
+)
+from app.services.session_service import SessionService
 
 router = APIRouter()
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(payload: LoginRequest, db: Session = Depends(get_db)):
-    tenant = db.query(Tenant).filter(Tenant.email == payload.email).first()
-    if not tenant:
-        raise HTTPException(status_code=404, detail="Tenant not found")
+def login(
+    payload: LoginRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    try:
+        account = AccountAuthenticationService(db).authenticate(
+            identifier=payload.identifier,
+            password=payload.password,
+        )
+    except InvalidCredentialsError as error:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Ungültige Anmeldedaten.",
+        ) from error
 
-    if payload.password != "demo123":
-        raise HTTPException(status_code=401, detail="Invalid password")
+    session_result = SessionService(db).create_session(account)
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=session_result.token,
+        **session_cookie_settings(),
+    )
 
     return LoginResponse(
-        tenant_id=tenant.id,
-        email=tenant.email,
-        name=tenant.name,
-        unit_preference=tenant.unit_preference,
+        account_id=account.account_id,
+        role=account.role,
+        password_change_required=account.password_change_required,
     )

@@ -6,17 +6,16 @@ from app.models import AccountRole
 
 
 class LoginRequest(BaseModel):
-    email: str
+    identifier: str
     password: str
+
+    model_config = ConfigDict(extra="forbid")
 
 
 class LoginResponse(BaseModel):
-    tenant_id: str
-    email: str
-    name: str
-    unit_preference: str
-
-    model_config = ConfigDict(from_attributes=True)
+    account_id: str
+    role: AccountRole
+    password_change_required: bool
 
 
 class TenantCreate(BaseModel):

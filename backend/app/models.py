@@ -51,6 +51,7 @@ class Account(Base):
     account_id = Column(String(9), nullable=False, unique=True, index=True, default=generate_account_id)
     name = Column(String(255), nullable=False)
     email = Column(String(255), nullable=True, unique=True, index=True)
+    password_hash = Column(String(255), nullable=False)
     role = Column(SqlEnum(AccountRole, native_enum=False, create_constraint=True), nullable=False)
     password_change_required = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -25,9 +25,15 @@ from app.services.password_change_service import (
     PasswordChangeService,
     PasswordUnchangedError,
 )
-from app.services.session_service import SessionService
+from app.services.session_service import SessionPersistenceError, SessionService
 
 router = APIRouter()
+
+
+def _delete_session_cookie(response: Response) -> None:
+    cookie_settings = session_cookie_settings()
+    cookie_settings.pop("max_age")
+    response.delete_cookie(key=SESSION_COOKIE_NAME, **cookie_settings)
 
 
 @router.post("/login", response_model=LoginResponse)
@@ -59,6 +65,24 @@ def login(
         role=account.role,
         password_change_required=account.password_change_required,
     )
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(request: Request, db: Session = Depends(get_db)) -> Response:
+    """Idempotently revoke only the presented session, even during password-change duty."""
+
+    token = request.cookies.get(SESSION_COOKIE_NAME)
+    if token is not None:
+        try:
+            SessionService(db).revoke_session(token)
+        except SessionPersistenceError as error:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Abmeldung derzeit nicht möglich.",
+            ) from error
+    response = Response(status_code=status.HTTP_204_NO_CONTENT)
+    _delete_session_cookie(response)
+    return response
 
 
 @router.post("/change-password", response_model=PasswordChangeResponse)

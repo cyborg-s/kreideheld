@@ -3,11 +3,13 @@ import hashlib
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.dependencies.auth import SESSION_COOKIE_NAME
 from app.models import Account, AccountRole, AccountSession, Tenant
 from app.services.password_service import PasswordService
+from app.services.session_service import InvalidSessionError, SessionService
 
 
 def create_tenant(db_session: Session) -> Tenant:
@@ -271,3 +273,77 @@ def test_login_rejects_role_and_tenant_request_fields(
     )
 
     assert response.status_code == 422
+
+
+def assert_deleted_session_cookie(response) -> None:
+    assert response.status_code == 204
+    assert response.content == b""
+    cookie = response.headers["set-cookie"].lower()
+    for attribute in (f"{SESSION_COOKIE_NAME}=", "max-age=0", "path=/", "httponly", "secure", "samesite=lax"):
+        assert attribute in cookie
+
+
+def test_logout_revokes_only_current_session_and_is_repeatable(
+    client: TestClient, db_session: Session
+):
+    tenant = create_tenant(db_session)
+    owner = create_account(
+        db_session, tenant=tenant, account_id="OW-000001", role=AccountRole.OWNER,
+        email="owner@example.com", password="InitialPass1!",
+    )
+    other = create_account(
+        db_session, tenant=tenant, account_id="EM-000001", role=AccountRole.EMPLOYEE,
+        password="OtherSecure1!",
+    )
+    service = SessionService(db_session)
+    second_token = service.create_session(owner).token
+    other_token = service.create_session(other).token
+    client.base_url = "https://testserver"
+    assert login(client, identifier=owner.account_id, password="InitialPass1!").status_code == 200
+    token = client.cookies.get(SESSION_COOKIE_NAME)
+
+    response = client.post("/auth/logout")
+    assert_deleted_session_cookie(response)
+    assert client.cookies.get(SESSION_COOKIE_NAME) is None
+    with pytest.raises(InvalidSessionError):
+        service.get_account_for_token(token)
+    assert service.get_account_for_token(second_token).id == owner.id
+    assert service.get_account_for_token(other_token).id == other.id
+    assert client.get("/accounts").status_code == 401
+    assert client.get("/accounts", headers={"Cookie": f"{SESSION_COOKIE_NAME}={token}"}).status_code == 401
+    assert_deleted_session_cookie(client.post("/auth/logout"))
+    assert_deleted_session_cookie(client.post("/auth/logout", headers={"Cookie": f"{SESSION_COOKIE_NAME}={token}"}))
+
+
+@pytest.mark.parametrize("token", [None, "unknown-token", "' OR 1=1 --"])
+def test_logout_without_valid_session_is_idempotent(client: TestClient, token: str | None):
+    client.base_url = "https://testserver"
+    if token is not None:
+        client.cookies.set(SESSION_COOKIE_NAME, token, domain="testserver.local", path="/")
+    assert_deleted_session_cookie(client.post("/auth/logout"))
+    assert client.cookies.get(SESSION_COOKIE_NAME) is None
+
+
+def test_logout_commit_failure_is_not_reported_as_success(
+    client: TestClient, db_session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    tenant = create_tenant(db_session)
+    account = create_account(
+        db_session, tenant=tenant, account_id="EM-000001", role=AccountRole.EMPLOYEE,
+        password="InitialPass1!",
+    )
+    client.base_url = "https://testserver"
+    login(client, identifier=account.account_id, password="InitialPass1!")
+    token = client.cookies.get(SESSION_COOKIE_NAME)
+
+    def fail(self):
+        raise SQLAlchemyError("simulated commit failure")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Session, "commit", fail)
+        response = client.post("/auth/logout")
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Abmeldung derzeit nicht möglich."}
+    assert "set-cookie" not in response.headers
+    assert client.cookies.get(SESSION_COOKIE_NAME) == token
+    assert SessionService(db_session).get_account_for_token(token).id == account.id

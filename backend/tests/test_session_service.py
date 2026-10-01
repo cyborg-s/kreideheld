@@ -3,11 +3,12 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 from sqlalchemy import func, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.models import Account, AccountRole, AccountSession, Tenant
 from app.services.password_service import PasswordService
-from app.services.session_service import InvalidSessionError, SessionService
+from app.services.session_service import InvalidSessionError, SessionPersistenceError, SessionService
 
 
 def create_account(db_session: Session, *, account_id: str, role: AccountRole) -> Account:
@@ -127,3 +128,56 @@ def test_multiple_sessions_receive_distinct_high_entropy_tokens(db_session: Sess
 
     assert first.token != second.token
     assert first.session.token_hash != second.session.token_hash
+
+
+def test_revoke_all_is_account_scoped_and_idempotent(db_session: Session):
+    account = create_account(db_session, account_id="EM-000001", role=AccountRole.EMPLOYEE)
+    other = create_account(db_session, account_id="EM-000002", role=AccountRole.EMPLOYEE)
+    service = SessionService(db_session)
+    sessions = [service.create_session(account) for _ in range(3)]
+    other_session = service.create_session(other)
+
+    service.revoke_all_sessions_for_account(account.id)
+    timestamps = []
+    for result in sessions:
+        db_session.refresh(result.session)
+        assert result.session.revoked_at is not None
+        timestamps.append(result.session.revoked_at)
+        with pytest.raises(InvalidSessionError):
+            service.get_account_for_token(result.token)
+    service.revoke_all_sessions_for_account(account.id)
+    for result, timestamp in zip(sessions, timestamps):
+        db_session.refresh(result.session)
+        assert result.session.revoked_at == timestamp
+    assert service.get_account_for_token(other_session.token).id == other.id
+
+
+def test_revoke_all_without_sessions_is_a_noop(db_session: Session):
+    account = create_account(db_session, account_id="EM-000001", role=AccountRole.EMPLOYEE)
+    service = SessionService(db_session)
+    service.revoke_all_sessions_for_account(account.id)
+    service.revoke_all_sessions_for_account(account.id)
+    assert db_session.scalar(select(func.count()).select_from(AccountSession)) == 0
+
+
+@pytest.mark.parametrize("failure_method", ["execute", "commit"])
+def test_revoke_all_database_failure_rolls_back(
+    db_session: Session, monkeypatch: pytest.MonkeyPatch, failure_method: str
+):
+    account = create_account(db_session, account_id="EM-000001", role=AccountRole.EMPLOYEE)
+    service = SessionService(db_session)
+    sessions = [service.create_session(account) for _ in range(3)]
+
+    account_uuid = account.id
+
+    def fail(*args, **kwargs):
+        raise SQLAlchemyError("simulated database failure")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(db_session, failure_method, fail)
+        with pytest.raises(SessionPersistenceError):
+            service.revoke_all_sessions_for_account(account_uuid)
+    for result in sessions:
+        db_session.refresh(result.session)
+        assert result.session.revoked_at is None
+        assert service.get_account_for_token(result.token).id == account.id

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.models import Account
 from app.services.password_policy import PasswordValidationResult, validate_password
 from app.services.password_service import PasswordService
+from app.services.session_service import SessionPersistenceError, SessionService
 
 
 class PasswordChangeError(Exception):
@@ -48,7 +49,7 @@ class PasswordChangeService:
     def change_password(
         self, *, account: Account, current_password: str, new_password: str
     ) -> Account:
-        """Replace an account password and clear its password-change requirement."""
+        """Atomically replace credentials, clear the requirement, and revoke sessions."""
 
         if not self._password_service.verify_password(
             current_password, account.password_hash
@@ -65,8 +66,9 @@ class PasswordChangeService:
         account.password_hash = self._password_service.hash_password(new_password)
         account.password_change_required = False
         try:
+            SessionService(self._db).revoke_all_sessions_for_account(account.id, commit=False)
             self._db.commit()
-        except SQLAlchemyError as error:
+        except (SQLAlchemyError, SessionPersistenceError) as error:
             self._db.rollback()
             raise PasswordChangePersistenceError(
                 "The password change could not be persisted"

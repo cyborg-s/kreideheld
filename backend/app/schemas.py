@@ -31,6 +31,8 @@ class PasswordChangeResponse(BaseModel):
     """Minimal confirmation without account, hash, or session data."""
 
     password_change_required: bool
+    login_required: bool
+    message: str
 
 
 class TenantCreate(BaseModel):

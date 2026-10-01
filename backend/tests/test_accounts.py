@@ -277,7 +277,7 @@ def test_duplicate_email_is_a_conflict_without_another_account(
     assert account_count(db_session) == before
 
 
-def test_required_password_change_blocks_then_releases_owner_on_same_session(
+def test_required_password_change_blocks_then_releases_owner_after_new_login(
     client: TestClient, db_session: Session
 ):
     tenant = create_tenant(
@@ -291,6 +291,7 @@ def test_required_password_change_blocks_then_releases_owner_on_same_session(
         email="owner@example.com",
         password_change_required=True,
     )
+    client.base_url = "https://testserver"
     login_response = client.post(
         "/auth/login",
         json={"identifier": "OW-000001", "password": "actor-password"},
@@ -298,7 +299,6 @@ def test_required_password_change_blocks_then_releases_owner_on_same_session(
     token = login_response.cookies.get(SESSION_COOKIE_NAME)
     assert login_response.status_code == 200
     assert token
-    client.cookies.set(SESSION_COOKIE_NAME, token)
     before = account_count(db_session)
 
     blocked = client.post(
@@ -315,13 +315,19 @@ def test_required_password_change_blocks_then_releases_owner_on_same_session(
             "new_password": "NewSecurePass2!",
         },
     )
+    assert changed.status_code == 200
+    assert changed.json()["password_change_required"] is False
+    assert changed.json()["login_required"] is True
+    assert client.cookies.get(SESSION_COOKIE_NAME) is None
+    assert client.post("/accounts", json={"name": "Mitarbeiter", "role": "EMPLOYEE"}).status_code == 401
+    assert client.post(
+        "/auth/login", json={"identifier": owner.account_id, "password": "NewSecurePass2!"}
+    ).status_code == 200
     allowed = client.post(
         "/accounts", json={"name": "Mitarbeiter", "role": "EMPLOYEE"}
     )
 
-    assert changed.status_code == 200
-    assert changed.json() == {"password_change_required": False}
-    assert "set-cookie" not in changed.headers
+    assert "max-age=0" in changed.headers["set-cookie"].lower()
     assert allowed.status_code == 201
     assert account_count(db_session) == before + 1
 
@@ -339,7 +345,10 @@ def test_required_password_change_and_rbac_remain_separate_for_employee(
         role=AccountRole.EMPLOYEE,
         password_change_required=True,
     )
-    authenticate_client(client, db_session, employee)
+    client.base_url = "https://testserver"
+    assert client.post(
+        "/auth/login", json={"identifier": employee.account_id, "password": "actor-password"}
+    ).status_code == 200
     before = account_count(db_session)
 
     blocked = client.post(
@@ -352,6 +361,11 @@ def test_required_password_change_and_rbac_remain_separate_for_employee(
             "new_password": "NewSecurePass2!",
         },
     )
+    assert client.post("/accounts", json={"name": "Ziel", "role": "EMPLOYEE"}).status_code == 401
+    assert client.cookies.get(SESSION_COOKIE_NAME) is None
+    assert client.post(
+        "/auth/login", json={"identifier": employee.account_id, "password": "NewSecurePass2!"}
+    ).status_code == 200
     rbac_denied = client.post(
         "/accounts", json={"name": "Ziel", "role": "EMPLOYEE"}
     )
@@ -429,7 +443,7 @@ def test_employee_cannot_read_account_administration_list(
     assert response.json() == {"detail": "Nicht berechtigt, die Account-Liste zu lesen."}
 
 
-def test_account_list_unlocks_after_password_change_using_same_login_cookie(
+def test_account_list_unlocks_after_password_change_and_new_login(
     client: TestClient, db_session: Session
 ):
     tenant = create_tenant(db_session, name="A", email="a@example.com")
@@ -453,8 +467,14 @@ def test_account_list_unlocks_after_password_change_using_same_login_cookie(
         json={"current_password": "actor-password", "new_password": "NewSecurePass2!"},
     )
     assert changed.status_code == 200
-    assert "set-cookie" not in changed.headers
-    assert client.cookies.get(SESSION_COOKIE_NAME) == token
+    assert "max-age=0" in changed.headers["set-cookie"].lower()
+    assert client.cookies.get(SESSION_COOKIE_NAME) is None
+    assert client.get("/accounts").status_code == 401
+    assert client.get("/accounts", headers={"Cookie": f"{SESSION_COOKIE_NAME}={token}"}).status_code == 401
+    assert client.post(
+        "/auth/login", json={"identifier": owner.account_id, "password": "NewSecurePass2!"}
+    ).status_code == 200
+    assert client.cookies.get(SESSION_COOKIE_NAME) != token
     allowed = client.get("/accounts")
     assert allowed.status_code == 200
     assert [row["account_id"] for row in allowed.json()] == [owner.account_id]

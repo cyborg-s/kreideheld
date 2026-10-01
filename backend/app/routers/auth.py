@@ -88,10 +88,11 @@ def logout(request: Request, db: Session = Depends(get_db)) -> Response:
 @router.post("/change-password", response_model=PasswordChangeResponse)
 def change_password(
     payload: PasswordChangeRequest,
+    response: Response,
     db: Session = Depends(get_db),
     current_account: Account = Depends(get_current_account),
 ):
-    """Change only the authenticated account's password without changing its session."""
+    """Change credentials, revoke all account sessions, and require a fresh login."""
 
     try:
         account = PasswordChangeService(db).change_password(
@@ -124,6 +125,9 @@ def change_password(
             detail="Passwortänderung derzeit nicht möglich.",
         ) from error
 
+    _delete_session_cookie(response)
     return PasswordChangeResponse(
-        password_change_required=account.password_change_required
+        password_change_required=account.password_change_required,
+        login_required=True,
+        message="Passwort erfolgreich geändert. Erneute Anmeldung erforderlich.",
     )

@@ -5,7 +5,7 @@ import secrets
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -87,6 +87,31 @@ class SessionService:
         except SQLAlchemyError as error:
             self._db.rollback()
             raise SessionPersistenceError("The session could not be revoked") from error
+
+    def revoke_all_sessions_for_account(
+        self, account_id: str, *, commit: bool = True
+    ) -> None:
+        """Revoke all sessions by internal account UUID.
+
+        With commit=False the caller owns the transaction and must commit or
+        roll back both this update and its other changes together.
+        """
+
+        try:
+            self._db.execute(
+                update(AccountSession)
+                .where(
+                    AccountSession.account_id == account_id,
+                    AccountSession.revoked_at.is_(None),
+                )
+                .values(revoked_at=_utc_now())
+                .execution_options(synchronize_session="fetch")
+            )
+            if commit:
+                self._db.commit()
+        except SQLAlchemyError as error:
+            self._db.rollback()
+            raise SessionPersistenceError("The account sessions could not be revoked") from error
 
     def _find_session(self, token: str) -> AccountSession | None:
         if not isinstance(token, str):

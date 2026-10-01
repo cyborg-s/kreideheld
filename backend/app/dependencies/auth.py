@@ -49,6 +49,19 @@ def get_current_account(
         raise _invalid_session_http_error() from error
 
 
+def require_password_change_completed(
+    current_account: Account = Depends(get_current_account),
+) -> Account:
+    """Allow normal protected actions only after a required password change."""
+
+    if current_account.password_change_required:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Passwortänderung erforderlich.",
+        )
+    return current_account
+
+
 def _invalid_session_http_error() -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

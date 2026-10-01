@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import get_current_account
+from app.dependencies.auth import require_password_change_completed
 from app.models import Account, AccountRole
 from app.schemas import AccountCreate, AccountOnboardingResponse, AccountRead
 from app.services.account_onboarding_service import (
@@ -35,7 +35,7 @@ def can_create_account(actor_role: AccountRole, target_role: AccountRole) -> boo
 def create_account(
     payload: AccountCreate,
     db: Session = Depends(get_db),
-    current_account: Account = Depends(get_current_account),
+    current_account: Account = Depends(require_password_change_completed),
 ):
     """Onboard an ADMIN or EMPLOYEE within the authenticated actor's tenant."""
 
@@ -84,5 +84,15 @@ def create_account(
 
 
 @router.get("", response_model=list[AccountRead])
-def list_accounts(db: Session = Depends(get_db)):
-    return db.query(Account).all()
+def list_accounts(
+    db: Session = Depends(get_db),
+    current_account: Account = Depends(require_password_change_completed),
+):
+    """List account administration data only within the actor's tenant."""
+
+    if current_account.role not in {AccountRole.OWNER, AccountRole.ADMIN}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Nicht berechtigt, die Account-Liste zu lesen.",
+        )
+    return db.query(Account).filter(Account.tenant_id == current_account.tenant_id).all()

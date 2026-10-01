@@ -58,8 +58,6 @@ class AccountCreate(BaseModel):
 class AccountRead(BaseModel):
     """Normal account representation without credential material."""
 
-    id: str
-    tenant_id: str
     account_id: str
     name: str
     email: Optional[str] = None

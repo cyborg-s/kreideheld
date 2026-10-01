@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.dependencies.auth import (
     SESSION_COOKIE_NAME,
     get_current_account,
+    require_password_change_completed,
     session_cookie_settings,
 )
 from app.main import app
@@ -31,7 +32,18 @@ def current_account_for_test(
     }
 
 
-def create_account(db_session: Session, *, account_id: str) -> Account:
+@app.get("/_test/password-change-completed")
+def password_change_completed_for_test(
+    current_account: Account = Depends(require_password_change_completed),
+):
+    """Test-only route for the post-authentication access-state dependency."""
+
+    return {"account_id": current_account.account_id}
+
+
+def create_account(
+    db_session: Session, *, account_id: str, password_change_required: bool = True
+) -> Account:
     tenant = Tenant(name="Holzwerk", email=f"tenant-{account_id}@example.com")
     account = Account(
         tenant=tenant,
@@ -40,7 +52,7 @@ def create_account(db_session: Session, *, account_id: str) -> Account:
         email=f"{account_id.lower()}@example.com",
         role=AccountRole.EMPLOYEE,
         password_hash=PasswordService().hash_password("test-password"),
-        password_change_required=True,
+        password_change_required=password_change_required,
     )
     db_session.add(account)
     db_session.commit()
@@ -52,6 +64,12 @@ def request_current_account(client: TestClient, token: str | None = None):
     if token is not None:
         client.cookies.set(SESSION_COOKIE_NAME, token)
     return client.get("/_test/current-account")
+
+
+def request_password_change_completed(client: TestClient, token: str | None = None):
+    if token is not None:
+        client.cookies.set(SESSION_COOKIE_NAME, token)
+    return client.get("/_test/password-change-completed")
 
 
 def assert_generic_session_401(response) -> None:
@@ -110,6 +128,38 @@ def test_current_account_loads_current_data_and_uses_account_tenant(
     assert response.json()["name"] == "Aktualisiert"
     assert response.json()["role"] == "ADMIN"
     assert response.json()["tenant_id"] == account.tenant_id
+
+
+def test_password_change_requirement_blocks_normal_protected_access(
+    client: TestClient, db_session: Session
+):
+    account = create_account(db_session, account_id="EM-000001")
+    token = SessionService(db_session).create_session(account).token
+
+    response = request_password_change_completed(client, token)
+
+    assert response.status_code == 403
+    assert response.json() == {"detail": "Passwortänderung erforderlich."}
+
+
+def test_completed_password_change_allows_normal_protected_access(
+    client: TestClient, db_session: Session
+):
+    account = create_account(
+        db_session, account_id="EM-000001", password_change_required=False
+    )
+    token = SessionService(db_session).create_session(account).token
+
+    response = request_password_change_completed(client, token)
+
+    assert response.status_code == 200
+    assert response.json() == {"account_id": account.account_id}
+
+
+def test_password_change_enforcement_preserves_missing_session_401(client: TestClient):
+    response = request_password_change_completed(client)
+
+    assert_generic_session_401(response)
 
 
 def test_cookie_security_changes_only_with_the_debug_configuration():

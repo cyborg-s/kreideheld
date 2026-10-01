@@ -18,6 +18,21 @@ class LoginResponse(BaseModel):
     password_change_required: bool
 
 
+class PasswordChangeRequest(BaseModel):
+    """Exact user-entered credentials for an authenticated password change."""
+
+    current_password: str
+    new_password: str
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class PasswordChangeResponse(BaseModel):
+    """Minimal confirmation without account, hash, or session data."""
+
+    password_change_required: bool
+
+
 class TenantCreate(BaseModel):
     name: str
     email: str
